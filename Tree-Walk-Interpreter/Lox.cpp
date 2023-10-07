@@ -38,11 +38,9 @@ void runFile(std::string_view path){
     std::string contents = readFile(path);
     run(contents);
     
-    /*
     if(hadError){
         std::exit(65);
     }
-    */
 
     return;
 }
@@ -57,7 +55,7 @@ void runPrompt(){
         }
         run(line);
         
-        //hadError = false;
+        hadError = false;
     }
 
     return;
