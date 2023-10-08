@@ -23,6 +23,7 @@ enum TokenType{
     EOF
 };
 
+
 std::string toString(TokenType type){
     static const std::string strings[] = {
         "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
