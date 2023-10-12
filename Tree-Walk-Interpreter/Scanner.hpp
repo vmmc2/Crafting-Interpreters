@@ -16,9 +16,28 @@ class Scanner{
         int current = 0;
         std::string source;
         std::vector<Token> tokens;
+        const std::map<std::string, TokenType> keywords = {
+            {"and",    TokenType::AND},
+            {"class",  TokenType::CLASS},
+            {"else",   TokenType::ELSE},
+            {"false",  TokenType::FALSE},
+            {"for",    TokenType::FOR},
+            {"fun",    TokenType::FUN},
+            {"if",     TokenType::IF},
+            {"nil",    TokenType::NIL},
+            {"or",     TokenType::OR},
+            {"print",  TokenType::PRINT},
+            {"return", TokenType::RETURN},
+            {"super",  TokenType::SUPER},
+            {"this",   TokenType::THIS},
+            {"true",   TokenType::TRUE},
+            {"var",    TokenType::VAR},
+            {"while",  TokenType::WHILE},
+        };
 
         Scanner(std::string source) : source(std::move(source)) {}
 
+        // Method that scans the whole source code and returns a sequence of tokens.
         std::vector<Token> scanTokens(){
             while(!isAtEnd()){
                 // We are at the beginning of the next lexeme.
@@ -54,6 +73,7 @@ class Scanner{
             return;
         }
 
+        // Method that scans one token per iteration.
         void scanToken(){
             char c = advance();
             switch(c){
@@ -121,12 +141,54 @@ class Scanner{
                     string();
                     break;
                 default:
-                    error(line, "Unexpected character.");
+                    if(isDigit(c)){
+                        number();
+                    }else if(isAlpha(c)){
+                        identifier();
+                    }else{
+                        error(line, "Unexpected character.");
+                    }
+                    
                     break;
             }
         }
 
+        // Method that adds an identifier token.
+        void identifier(){
+            while(isAlphaNumeric(peek())) advance();
+
+            TokenType type;
+            std::string lexeme = source.substr(start, current - start);
+            if(keywords.find(lexeme) != keywords.end()){
+                type = keywords[lexeme];
+            }else{
+                type = TokenType::IDENTIFIER;
+            }
+
+            addToken(type);
+
+            return;
+        }
+
+        // Method that adds a number (integer or floating-point) token.
+        void number(){
+            while(isDigit(peek())) advance();
+
+            // Look for a fractional part (check whether the number is an integer or a floating-point).
+            if(peek() == '.' && isDigit(peekNext())){
+                // Consume the dot ('.') that separates the integer part from the fractional part.
+                advance();
+
+                while(isDigit(peek())) advance();
+            }
+
+            addToken(TokenType::NUMBER, std::stod(source.substr(start, current - start)));
+
+            return;
+        }
+
         // Method that adds a string literal token.
+        // Note that Lox does not support escape sequences like '\n'. If that was the case, we would unescape those.
         void string(){
             while(peek() != '"' && !isAtEnd()){
                 if(peek() == '\n') line++;
@@ -160,5 +222,29 @@ class Scanner{
         char peek(){
             if(isAtEnd()) return '\0';
             return source[current];
+        }
+
+        // Method that works very similar to the "advance" method. However, it does not consume the character.
+        // Such method works as what's called a 2-lookahead.
+        // Since it looks at the next (right after) the current unconsumed character, we have 2 character of lookahead.
+        char peekNext(){
+            if(current + 1 >= source.length()) return '\0';
+            return source[current + 1];
+        }
+
+        // Method that checks whether the received character is a letter or an underscore.
+        bool isAlpha(char c){
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
+        }
+
+        // Method that checks whether the received character is a letter, a number of an underscore.
+        bool isAlphaNumeric(char c){
+            return isAlpha(c) || isDigit(c);
+        }
+
+        // Method that checks whether the received character is a digit
+        // ('0','1','2',...,'9') or not.
+        bool isDigit(char c){
+            return (c >= '0' && c <= '9');
         }
 }
