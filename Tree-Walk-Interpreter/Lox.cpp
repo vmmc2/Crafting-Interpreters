@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "Scanner.hpp"
 
 void run(std::string source){
     Scanner scanner(source);
