@@ -54,7 +54,7 @@ void runPrompt(){
         if(!std::getline(std::cin, line_of_code)){
             break;
         }
-        run(line);
+        run(line_of_code);
         
         hadError = false;
     }

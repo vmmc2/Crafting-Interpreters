@@ -16,7 +16,7 @@ class Scanner{
         int current = 0;
         std::string source;
         std::vector<Token> tokens;
-        const std::map<std::string, TokenType> keywords = {
+        std::map<std::string, TokenType> keywords = {
             {"and",    TokenType::AND},
             {"class",  TokenType::CLASS},
             {"else",   TokenType::ELSE},
@@ -46,7 +46,7 @@ class Scanner{
                 scanToken();
             }
 
-            tokens.push_back(Token(line, TokenType::EOF, nullptr, ""));
+            tokens.push_back(Token(line, TokenType::FILE_END, nullptr, ""));
             return tokens;
         }
 
@@ -200,6 +200,9 @@ class Scanner{
                 return;
             }
 
+            // Close the '"' character.
+            advance();
+
             std::string literal = source.substr(start + 1, current - start - 2);
             addToken(TokenType::STRING, literal);
 
@@ -247,4 +250,4 @@ class Scanner{
         bool isDigit(char c){
             return (c >= '0' && c <= '9');
         }
-}
+};
