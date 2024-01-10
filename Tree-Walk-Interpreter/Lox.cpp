@@ -7,16 +7,15 @@
 #include "Scanner.hpp"
 
 void run(std::string source){
-    Scanner scanner(source);
-    std::vector<Token> tokens = scanner.scanTokens();
+  Scanner scanner(source);
+  std::vector<Token> tokens = scanner.scanTokens();
 
-    for(const Token& token : tokens){
-        std::cout << token.toString() << std::endl;
-    }
+  for(const Token& token : tokens){
+    std::cout << token.toString() << std::endl;
+  }
 
-    return;
+  return;
 }
-
 
 std::string readFile(std::string_view path) {
   std::ifstream file{path.data(), std::ios::in | std::ios::binary | std::ios::ate};
@@ -34,43 +33,40 @@ std::string readFile(std::string_view path) {
   return contents;
 }
 
-
 void runFile(std::string_view path){
-    std::string contents = readFile(path);
-    run(contents);
+  std::string contents = readFile(path);
+  run(contents);
     
-    if(hadError){
-        std::exit(65);
-    }
+  if(hadError){
+    std::exit(65);
+  }
 
-    return;
+  return;
 }
-
 
 void runPrompt(){
-    for(;;){
-        std::cout << "> ";
-        std::string line_of_code;
-        if(!std::getline(std::cin, line_of_code)){
-            break;
-        }
-        run(line_of_code);
-        
-        hadError = false;
+  for(;;){
+    std::cout << "> ";
+    std::string line_of_code;
+    if(!std::getline(std::cin, line_of_code)){
+      break;
     }
+    run(line_of_code);
+        
+    hadError = false;
+  }
 
-    return;
+  return;
 }
 
-
 int main(int argc, char* argv[]){ 
-    if(argc == 1){
-        runPrompt();
-    }else if(argc == 2){
-        runFile(std::string_view(argv[1]));
-    }else{
-        std::cout << "Error! Wrong number of arguments. Should be 0 or 1." << std::endl;
-        std::exit(64);
-    }
-    return 0;
+  if(argc == 1){
+    runPrompt();
+  }else if(argc == 2){
+    runFile(std::string_view(argv[1]));
+  }else{
+    std::cout << "Error! Wrong number of arguments. Should be 0 or 1." << std::endl;
+    std::exit(64);
+  }
+  return 0;
 }

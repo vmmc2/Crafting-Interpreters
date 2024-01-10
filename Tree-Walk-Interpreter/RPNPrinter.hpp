@@ -16,7 +16,6 @@ class RPNPrinter : public ExprVisitor{
     std::string rpn(std::string_view name, E... expr){
       assert((... && std::is_same_v<E, std::shared_ptr<Expr>>));
 
-
       std::ostringstream builder;
 
       builder << "(";

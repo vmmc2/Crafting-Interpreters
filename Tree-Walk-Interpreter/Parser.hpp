@@ -1,13 +1,24 @@
 #pragma once
 
+#include <cassert>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "Expr.hpp"
+#include "Error.hpp"
 #include "Token.hpp"
 #include "TokenType.hpp"
 
 class Parser{
   private:
+    // This is a simple sentinel class we use to unwind the parser.
+    struct ParseError: public std::runtime_error {
+      using std::runtime_error::runtime_error;
+    };
     const std::vector<Token>& tokens;
     int current = 0; // Points to the index of the next token waiting to be consumed.
 
@@ -129,6 +140,53 @@ class Parser{
       }
     }
 
+    // Function that checks to see if the next token is of the expected type.
+    // If so, it consumes the token and everything is groovy. Otherwise, an error is reported with a message.
+    Token consume(TokenType type, std::string_view message){
+      if(check(type)) return advance();
+
+      throw error(peek(), message);
+    }
+
+    // Function that reports an error, show is to the user and throws a 'ParseError' instance.
+    // Such function will report an error by calling the 'error' function that reports an error at a given token.
+    // The 'error' function shows the token’s location and the token itself.
+    // The 'error' method below returns the error instead of throwing it because we want to let the calling
+    // method inside the parser decide whether to unwind or not.
+    // For example: The 'consume' method unwinds the parser. However, other methods might not want to do it.
+    ParseError error(Token token, std::string_view message){
+      ::error(token, message);
+      return ParseError{""};
+    }
+
+    // Function that synchronizes the forthcoming sequence of tokens after the parser got into a correct state.
+    // This function will throw unwanted tokens until it find a token that represents the beginning of the next statement.
+    // It discards tokens until it thinks it has found a statement boundary. 
+    // After catching a ParseError, we’ll call this and then we are hopefully back in sync.
+    // When it works well, we have discarded tokens that would have likely caused cascaded errors anyway,
+    // and now we can parse the rest of the file starting at the next statement.
+    void synchronize(){
+      advance();
+
+      while(!isAtEnd()){
+        if(previous().type == TokenType::SEMICOLON) return;
+
+        switch (peek().type){
+          case (TokenType::CLASS):
+          case (TokenType::FUN):
+          case (TokenType::VAR):
+          case (TokenType::FOR):
+          case (TokenType::IF):
+          case (TokenType::WHILE):
+          case (TokenType::PRINT):
+          case (TokenType::RETURN):
+            return;
+        }
+
+        advance();
+      }
+    }
+
     // Function that checks whether the next token to be consumed is of any the given types. 
     // If that's the case, it consumes the token and returns true. 
     // Otherwise, it leaves the token alone and return false.
@@ -177,6 +235,4 @@ class Parser{
     Parser(const std::vector<Token>& tokens)
       : tokens{tokens}
     {}
-
-
 };
