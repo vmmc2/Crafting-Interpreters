@@ -7,7 +7,7 @@ CXX = g++
 CXXFLAGS = -std=c++17
 
 # Source file
-SRCS = RPNPrinterTester.cpp
+SRCS = Lox.cpp
 
 # Executable name
 TARGET = test

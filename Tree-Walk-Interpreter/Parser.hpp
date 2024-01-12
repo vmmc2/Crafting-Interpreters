@@ -138,6 +138,8 @@ class Parser{
         consume(TokenType::RIGHT_PAREN, "Expected ')' after expression.");
         return std::make_shared<Grouping>(expr);
       }
+
+      throw error(peek(), "Expect an expression.");
     }
 
     // Function that checks to see if the next token is of the expected type.
@@ -235,4 +237,12 @@ class Parser{
     Parser(const std::vector<Token>& tokens)
       : tokens{tokens}
     {}
+
+    std::shared_ptr<Expr> parse(){
+      try{
+        return expression();
+      }catch(ParseError error){
+        return nullptr;
+      }
+    }
 };

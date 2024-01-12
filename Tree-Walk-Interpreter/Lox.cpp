@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "AstPrinter.hpp"
 #include "Scanner.hpp"
+#include "Parser.hpp"
 
 void run(std::string source){
   Scanner scanner(source);
@@ -13,6 +15,13 @@ void run(std::string source){
   for(const Token& token : tokens){
     std::cout << token.toString() << std::endl;
   }
+
+  Parser parser(tokens);
+  std::shared_ptr<Expr> expression = parser.parse();
+
+  if(hadError) return;
+
+  std::cout << AstPrinter{}.print(expression) << std::endl;
 
   return;
 }
