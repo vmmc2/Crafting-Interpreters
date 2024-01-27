@@ -7,6 +7,7 @@
 #include "AstPrinter.hpp"
 #include "Scanner.hpp"
 #include "Parser.hpp"
+#include "Interpreter.hpp"
 
 void run(std::string source){
   Scanner scanner(source);
@@ -21,7 +22,12 @@ void run(std::string source){
 
   if(hadError) return;
 
-  std::cout << AstPrinter{}.print(expression) << std::endl;
+  // std::cout << AstPrinter{}.print(expression) << std::endl;
+
+  // This might be troublesome when we add global variables later in our language.
+  // If that's the case, then make sure to put the 'interpreter' variable inside the global scope.
+  static Interpreter interpreter; 
+  interpreter.interpret(expression);
 
   return;
 }
@@ -48,6 +54,10 @@ void runFile(std::string_view path){
     
   if(hadError){
     std::exit(65);
+  }
+
+  if(hadRuntimeError){
+    std::exit(70);
   }
 
   return;

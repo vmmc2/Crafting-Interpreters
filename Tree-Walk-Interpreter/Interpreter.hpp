@@ -1,8 +1,11 @@
 #pragma once
 
 #include <any>
+#include <iostream>
 
 #include "Expr.hpp"
+#include "Error.hpp"
+#include "RuntimeError.hpp"
 
 class Interpreter : public ExprVisitor{
   private:
@@ -32,6 +35,29 @@ class Interpreter : public ExprVisitor{
       return false;
     }
 
+    std::string stringify(std::any object){
+      if(object.type() == typeid(nullptr)) return "nil";
+
+      if(object.type() == typeid(double)){
+        std::string text = std::to_string(std::any_cast<double>(object));
+        int textLength = text.length();
+
+        if(text[textLength - 2] == '.' && text[textLength - 1] == '0'){
+          text = text.substr(0, textLength - 2);
+        }
+
+        return text;
+      }
+
+      if(object.type() == typeid(std::string)) return std::any_cast<std::string>(object);
+
+      if(object.type() == typeid(bool)){
+        return std::any_cast<bool>(object) ? "true" : "false";
+      }
+
+      return "Error in stringify: object type not recognized.";
+    }
+
     std::any evaluate(std::shared_ptr<Expr> expr){
       return expr->accept(*this);
     }
@@ -48,26 +74,37 @@ class Interpreter : public ExprVisitor{
           if(left.type() == typeid(std::string) && right.type() == typeid(std::string)){
             return std::any_cast<std::string>(left) + std::any_cast<std::string>(right);
           }
-          break;
+
+          throw RuntimeError{expr->op, "Operands must be either two numbers or two strings."};
         case TokenType::MINUS:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) - std::any_cast<double>(right);
         case TokenType::STAR:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) * std::any_cast<double>(right);
         case TokenType::SLASH:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) / std::any_cast<double>(right);
         case TokenType::GREATER:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) > std::any_cast<double>(right);
         case TokenType::GREATER_EQUAL:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) >= std::any_cast<double>(right);
         case TokenType::LESS:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) < std::any_cast<double>(right);
         case TokenType::LESS_EQUAL:
+          checkNumberOperands(expr->op, left, right);
           return std::any_cast<double>(left) <= std::any_cast<double>(right);
         case TokenType::BANG_EQUAL:
           return !isEqual(left, right);
         case TokenType::EQUAL_EQUAL:
           return isEqual(left, right);
       }
+      
+      // Unreachable
+      return {};
     }
 
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{
@@ -77,11 +114,22 @@ class Interpreter : public ExprVisitor{
         case TokenType::BANG:
           return !isTruthy(right);
         case TokenType::MINUS:
+          checkNumberOperand(expr->op, right);
           return -std::any_cast<double>(right);
       }
 
       // Unreachable
       return {};
+    }
+
+    void checkNumberOperand(Token op, std::any operand){
+      if(operand.type() == typeid(double)) return;
+      throw RuntimeError{op, "Operand must be a number."};
+    }
+
+    void checkNumberOperands(Token op, std::any left, std::any right){
+      if(left.type() == typeid(double) && right.type() == typeid(double)) return;
+      throw RuntimeError{op, "Operands must be both numbers"};
     }
 
     std::any visitLiteralExpr(std::shared_ptr<Literal> expr) override{
@@ -90,5 +138,14 @@ class Interpreter : public ExprVisitor{
 
     std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) override{
       return evaluate(expr->expression);
+    }
+
+    void interpret(std::shared_ptr<Expr> expression){
+      try{
+        std::any value = evaluate(expression);
+        std::cout << stringify(value) << std::endl;
+      }catch(RuntimeError error){
+        runtimeError(error);
+      }
     }
 };
