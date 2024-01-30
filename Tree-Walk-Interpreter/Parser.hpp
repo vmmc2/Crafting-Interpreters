@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Expr.hpp"
+#include "Stmt.hpp"
 #include "Error.hpp"
 #include "Token.hpp"
 #include "TokenType.hpp"
@@ -238,11 +239,13 @@ class Parser{
       : tokens{tokens}
     {}
 
-    std::shared_ptr<Expr> parse(){
-      try{
-        return expression();
-      }catch(ParseError error){
-        return nullptr;
+    std::vector<std::shared_ptr<Stmt>> parse(){
+      std::vector<std::shared_ptr<Stmt>> statements;
+
+      while(!isAtEnd()){
+        statements.push_back(statement());
       }
+
+      return statements;
     }
 };
