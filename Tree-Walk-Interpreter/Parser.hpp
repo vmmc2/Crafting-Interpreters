@@ -28,6 +28,31 @@ class Parser{
       return equality();
     }
 
+    // Function equivalent to the "statement" rule.
+    std::shared_ptr<Stmt> statement(){
+      if(match(TokenType::PRINT)){
+        return printStatement();
+      }
+
+      return expressionStatement();
+    }
+
+    // Function equivalent to the "printStatement" rule.
+    std::shared_ptr<Stmt> printStatement(){
+      std::shared_ptr<Expr> value = expression();
+      consume(TokenType::SEMICOLON, "Expected a ';' at the end of a PRINT statement.");
+
+      return std::make_shared<Print>(value);
+    }
+
+    // Function equivalent to the "expressionStatement" rule.
+    std::shared_ptr<Stmt> expressionStatement(){
+      std::shared_ptr<Expr> expr = expression();
+      consume(TokenType::SEMICOLON, "Expected a ';' at the end of an expression statement");
+
+      return std::make_shared<Expression>(expr);
+    }
+
     // Function equivalent to the "equality" rule.
     // Equality (and Inequality) are both Left-Associative operators.
     // It creates a left-associative nested tree of binary operator nodes.

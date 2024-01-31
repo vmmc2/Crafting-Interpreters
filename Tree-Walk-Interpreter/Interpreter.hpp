@@ -4,10 +4,11 @@
 #include <iostream>
 
 #include "Expr.hpp"
+#include "Stmt.hpp"
 #include "Error.hpp"
 #include "RuntimeError.hpp"
 
-class Interpreter : public ExprVisitor{
+class Interpreter : public ExprVisitor, public StmtVisitor{
   private:
     bool isTruthy(std::any object){
       if(object.type() == typeid(nullptr)) return false;
@@ -61,7 +62,26 @@ class Interpreter : public ExprVisitor{
     std::any evaluate(std::shared_ptr<Expr> expr){
       return expr->accept(*this);
     }
+
+    void execute(std::shared_ptr<Stmt> stmt){
+      stmt->accept(*this);
+      
+      return;
+    }
+  
   public:
+    std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
+      evaluate(stmt->expression);
+
+      return {};
+    }
+
+    std::any visitPrintStmt(std::shared_ptr<Print> stmt) override{
+      std::any expr = evaluate(stmt->expression);
+      std::cout << stringify(expr) << std::endl;
+      return {};
+    }
+
     std::any visitBinaryExpr(std::shared_ptr<Binary> expr) override{
       std::any left = evaluate(expr->left);
       std::any right = evaluate(expr->right);
@@ -140,10 +160,11 @@ class Interpreter : public ExprVisitor{
       return evaluate(expr->expression);
     }
 
-    void interpret(std::shared_ptr<Expr> expression){
+    void interpret(std::vector<std::shared_ptr<Stmt>> statements){
       try{
-        std::any value = evaluate(expression);
-        std::cout << stringify(value) << std::endl;
+        for(std::shared_ptr<Stmt> statement : statements){
+          execute(statement);
+        }
       }catch(RuntimeError error){
         runtimeError(error);
       }
