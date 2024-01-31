@@ -82,6 +82,16 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
+
+      return {};
+    }
+
+    std::any visitVarStmt(std::shared_ptr<Var> stmt) override{
+
+      return {};
+    }
+
     std::any visitBinaryExpr(std::shared_ptr<Binary> expr) override{
       std::any left = evaluate(expr->left);
       std::any right = evaluate(expr->right);

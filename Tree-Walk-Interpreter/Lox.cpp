@@ -9,6 +9,8 @@
 #include "Parser.hpp"
 #include "Interpreter.hpp"
 
+Interpreter interpreter; 
+
 void run(std::string source){
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scanTokens();
@@ -18,16 +20,13 @@ void run(std::string source){
   }
 
   Parser parser(tokens);
-  std::shared_ptr<Expr> expression = parser.parse();
+  std::vector<std::shared_ptr<Stmt>> statements = parser.parse();
 
   if(hadError) return;
 
   // std::cout << AstPrinter{}.print(expression) << std::endl;
 
-  // This might be troublesome when we add global variables later in our language.
-  // If that's the case, then make sure to put the 'interpreter' variable inside the global scope.
-  static Interpreter interpreter; 
-  interpreter.interpret(expression);
+  interpreter.interpret(statements);
 
   return;
 }
