@@ -24,6 +24,18 @@ struct Stmt{
   virtual std::any accept(StmtVisitor& visitor) = 0;
 };
 
+struct Block : Stmt, public std::enable_shared_from_this<Block>{
+  const std::vector<std::shared_ptr<Stmt>> statements;
+
+  Block(std::vector<std::shared_ptr<Stmt>> statements)
+    : statements{std::move(statements)}
+  {}
+
+  std::any accept(StmtVisitor& visitor) override{
+    return visitor.visitBlockStmt(shared_from_this());
+  }
+};
+
 struct Expression : Stmt, public std::enable_shared_from_this<Expression>{
   const std::shared_ptr<Expr> expression;
 
@@ -45,5 +57,18 @@ struct Print : Stmt, public std::enable_shared_from_this<Print>{
 
   std::any accept(StmtVisitor& visitor) override{
     return visitor.visitPrintStmt(shared_from_this());
+  }
+};
+
+struct Var : Stmt, public std::enable_shared_from_this<Var>{
+  const Token name;
+  const std::shared_ptr<Expr> initializer;
+
+  Var(Token name, std::shared_ptr<Expr> initializer)
+    : name{std::move(name)}, initializer{std::move(initializer)}
+  {}
+
+  std::any accept(StmtVisitor& visitor) override{
+    return visitor.visitVarStmt(shared_from_this());
   }
 };

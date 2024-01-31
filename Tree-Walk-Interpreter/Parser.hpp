@@ -23,9 +23,30 @@ class Parser{
     const std::vector<Token>& tokens;
     int current = 0; // Points to the index of the next token waiting to be consumed.
 
-    // Function equivalent to the "expression" rule.
-    std::shared_ptr<Expr> expression(){
-      return equality();
+
+    std::shared_ptr<Stmt> declaration(){
+      try{
+        if(match(TokenType::VAR)){
+          return varDeclaration();
+        }
+        return statement();
+      }catch(ParseError error){
+        synchronize();
+        return nullptr;
+      }
+    }
+
+    // Function equivalent to the "declaration" rule.
+    std::shared_ptr<Stmt> varDeclaration(){
+      Token name = consume(TokenType::IDENTIFIER, "Expected variable name after keyword 'var'.");
+      std::shared_ptr<Expr> initializer = nullptr;
+
+      if(match(TokenType::EQUAL)){
+        initializer = expression();
+      }
+
+      consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
+      return std::make_shared<Var>(std::move(name), initializer);
     }
 
     // Function equivalent to the "statement" rule.
@@ -51,6 +72,11 @@ class Parser{
       consume(TokenType::SEMICOLON, "Expected a ';' at the end of an expression statement");
 
       return std::make_shared<Expression>(expr);
+    }
+
+    // Function equivalent to the "expression" rule.
+    std::shared_ptr<Expr> expression(){
+      return equality();
     }
 
     // Function equivalent to the "equality" rule.
@@ -164,12 +190,16 @@ class Parser{
         consume(TokenType::RIGHT_PAREN, "Expected ')' after expression.");
         return std::make_shared<Grouping>(expr);
       }
+      if(match(TokenType::IDENTIFIER)){
+        return std::make_shared<Variable>(previous());
+      }
 
       throw error(peek(), "Expect an expression.");
     }
 
     // Function that checks to see if the next token is of the expected type.
-    // If so, it consumes the token and everything is groovy. Otherwise, an error is reported with a message.
+    // If so, it consumes the token and everything is groovy.
+    // Otherwise, an error is reported with a message.
     Token consume(TokenType type, std::string_view message){
       if(check(type)) return advance();
 
@@ -268,7 +298,7 @@ class Parser{
       std::vector<std::shared_ptr<Stmt>> statements;
 
       while(!isAtEnd()){
-        statements.push_back(statement());
+        statements.push_back(declaration());
       }
 
       return statements;

@@ -170,6 +170,10 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return evaluate(expr->expression);
     }
 
+    std::any visitVariableExpr(std::shared_ptr<Variable> expr) override{
+      return nullptr;
+    }
+
     void interpret(std::vector<std::shared_ptr<Stmt>> statements){
       try{
         for(std::shared_ptr<Stmt> statement : statements){
