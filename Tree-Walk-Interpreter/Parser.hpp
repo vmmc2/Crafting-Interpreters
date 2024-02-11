@@ -54,6 +54,9 @@ class Parser{
       if(match(TokenType::PRINT)){
         return printStatement();
       }
+      if(match(TokenType::LEFT_BRACE)){
+        return std::make_shared<Block>(block());
+      }
 
       return expressionStatement();
     }
@@ -74,9 +77,42 @@ class Parser{
       return std::make_shared<Expression>(expr);
     }
 
+    // Function equivalent to the "block" rule.
+    std::vector<std::shared_ptr<Stmt>> block(){
+      std::vector<std::shared_ptr<Stmt>> statements;
+
+      while(!check(TokenType::RIGHT_BRACE) && !isAtEnd()){
+        statements.push_back(declaration());
+      }
+
+      consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+
+      return statements;
+    }
+
     // Function equivalent to the "expression" rule.
     std::shared_ptr<Expr> expression(){
-      return equality();
+      return assignment();
+    }
+
+    // Function equivalent to the "assignment" rule.
+    // Remember that an assignment is also an expression whose resulting value is the R-value of it.
+    std::shared_ptr<Expr> assignment(){
+      std::shared_ptr<Expr> expr = equality(); // This can either evaluate to a L-value or a R-value.
+
+      if(match(TokenType::EQUAL)){
+        Token equals = previous(); // This contains the token of TokenType::EQUAL
+        std::shared_ptr<Expr> value = assignment();
+
+        if(Variable* e = dynamic_cast<Variable*>(expr.get())){
+          Token name = e->name;
+          return std::make_shared<Assign>(std::move(name), value);
+        }
+
+        error(std::move(equals), "Invalid assignment target.");
+      }
+
+      return expr;
     }
 
     // Function equivalent to the "equality" rule.

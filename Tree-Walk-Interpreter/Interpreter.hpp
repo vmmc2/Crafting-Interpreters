@@ -6,10 +6,14 @@
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Error.hpp"
+#include "Environment.hpp"
 #include "RuntimeError.hpp"
 
 class Interpreter : public ExprVisitor, public StmtVisitor{
   private:
+    // The variables stay in memory as long as the interpreter is still running.
+    std::shared_ptr<Environment> environment{ new Environment };
+
     bool isTruthy(std::any object){
       if(object.type() == typeid(nullptr)) return false;
       if(object.type() == typeid(bool)) return std::any_cast<bool>(object);
@@ -68,6 +72,24 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       return;
     }
+
+    void executeBlock(std::vector<std::shared_ptr<Stmt>> statements, std::shared_ptr<Environment> environment){
+      std::shared_ptr<Environment> previous = this->environment;
+
+      try{
+        this->environment = environment;
+        for(const std::shared_ptr<Stmt>& statement : statements){
+          execute(statement);
+        }
+      }catch(...){
+        this->environment = previous;
+        throw;
+      }
+
+      this->environment = previous;
+
+      return;
+    }
   
   public:
     std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
@@ -83,13 +105,29 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
+      executeBlock(stmt->statements, std::make_shared<Environment>(environment));
 
       return {};
     }
 
     std::any visitVarStmt(std::shared_ptr<Var> stmt) override{
+      // We assume that the variable declaration statement doesn't assign any value to the variable: "var a;"
+      // In this approach, the default declared variable without an initializer has the "nil" value.
+      std::any value = nullptr;
+      if(stmt->initializer != nullptr){ // We have a value to assign to the variable that's being declared: "var a = 5;"
+        value = evaluate(stmt->initializer);
+      }
+
+      environment->define(stmt->name.lexeme, std::move(value));
 
       return {};
+    }
+
+    std::any visitAssignExpr(std::shared_ptr<Assign> expr) override{
+      std::any value = evaluate(expr->value);
+      environment->assign(expr->name, value);
+
+      return value;
     }
 
     std::any visitBinaryExpr(std::shared_ptr<Binary> expr) override{
@@ -171,7 +209,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitVariableExpr(std::shared_ptr<Variable> expr) override{
-      return nullptr;
+      return environment->get(expr->name);
     }
 
     void interpret(std::vector<std::shared_ptr<Stmt>> statements){

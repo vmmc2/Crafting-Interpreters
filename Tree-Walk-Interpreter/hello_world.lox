@@ -1,0 +1,12 @@
+var a = 1;
+var c = 42;
+
+{
+  var a = 2;
+  print a;
+  var b = 3;
+  print a + b;
+  print b + c;
+}
+
+print a;

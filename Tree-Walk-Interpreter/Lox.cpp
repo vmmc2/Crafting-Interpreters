@@ -15,9 +15,9 @@ void run(std::string source){
   Scanner scanner(source);
   std::vector<Token> tokens = scanner.scanTokens();
 
-  for(const Token& token : tokens){
-    std::cout << token.toString() << std::endl;
-  }
+  // for(const Token& token : tokens){
+  //   std::cout << token.toString() << std::endl;
+  // }
 
   Parser parser(tokens);
   std::vector<std::shared_ptr<Stmt>> statements = parser.parse();
