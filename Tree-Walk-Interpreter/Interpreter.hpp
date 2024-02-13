@@ -98,6 +98,16 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitIfStmt(std::shared_ptr<If> stmt) override{
+      if(isTruthy(evaluate(stmt->condition))){
+        execute(stmt->ifBranch);
+      }else if(stmt->elseBranch != nullptr){
+        execute(stmt->elseBranch);
+      }
+
+      return {};
+    }
+
     std::any visitPrintStmt(std::shared_ptr<Print> stmt) override{
       std::any expr = evaluate(stmt->expression);
       std::cout << stringify(expr) << std::endl;

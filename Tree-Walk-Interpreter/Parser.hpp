@@ -51,6 +51,9 @@ class Parser{
 
     // Function equivalent to the "statement" rule.
     std::shared_ptr<Stmt> statement(){
+      if(match(TokenType::IF)){
+        return ifStatement();
+      }
       if(match(TokenType::PRINT)){
         return printStatement();
       }
@@ -59,6 +62,22 @@ class Parser{
       }
 
       return expressionStatement();
+    }
+
+    // Function equivalent to the "ifStatement" rule.
+    std::shared_ptr<Stmt> ifStatement(){
+      consume(TokenType::LEFT_PAREN, "Expected a '(' after 'if'.");
+      std::shared_ptr<Expr> condition = expression();
+      consume(TokenType::RIGHT_PAREN, "Expected a ')' after the condition of an 'if'.");
+
+      std::shared_ptr<Stmt> ifBranch = statement();
+      std::shared_ptr<Stmt> elseBranch = nullptr;
+
+      if(match(TokenType::ELSE)){
+        elseBranch = statement();
+      }
+
+      return std::make_shared<If>(condition, ifBranch, elseBranch);
     }
 
     // Function equivalent to the "printStatement" rule.
