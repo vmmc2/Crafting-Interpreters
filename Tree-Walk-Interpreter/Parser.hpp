@@ -51,6 +51,9 @@ class Parser{
 
     // Function equivalent to the "statement" rule.
     std::shared_ptr<Stmt> statement(){
+      if(match(TokenType::FOR)){
+        return forStatement();
+      }
       if(match(TokenType::IF)){
         return ifStatement();
       }
@@ -60,8 +63,68 @@ class Parser{
       if(match(TokenType::LEFT_BRACE)){
         return std::make_shared<Block>(block());
       }
+      if(match(TokenType::WHILE)){
+        return whileStatement();
+      }
 
       return expressionStatement();
+    }
+
+    // Function equivalent to the "forStatement" rule.
+    std::shared_ptr<Stmt> forStatement(){
+      consume(TokenType::LEFT_PAREN, "Expect a '(' after 'for'.");
+
+      // Checking for the "initializer" clause of the "for" loop.
+      std::shared_ptr<Stmt> initializer;
+      if(match(TokenType::SEMICOLON)){
+        initializer = nullptr;
+      }else if(match(TokenType::VAR)){
+        initializer = varDeclaration();
+      }else{
+        initializer = expressionStatement();
+      }
+
+      // Checking for the "condition" clause of the "for" loop.
+      std::shared_ptr<Expr> condition = nullptr;
+      if(!check(TokenType::SEMICOLON)){
+        condition = expression();
+      }
+      consume(TokenType::SEMICOLON, "Expected a ';' after the 'for' condition.");
+
+      // Checking for the "increment" clause of the "for" loop.
+      std::shared_ptr<Expr> increment = nullptr;
+      if(!check(TokenType::RIGHT_PAREN)){
+        increment = expression();
+      }
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after 'for' clauses.");
+
+      // Checking for the body of the 'for' loop.
+      std::shared_ptr<Stmt> body = statement();
+
+      if(increment != nullptr){
+        body = std::make_shared<Block>(
+          std::vector<std::shared_ptr<Stmt>>{
+            body,
+            std::make_shared<Expression>(increment)
+          }
+        );
+      }
+
+      if(condition == nullptr){
+        condition = std::make_shared<Literal>(true);
+      }
+      body = std::make_shared<While>(condition, body);
+
+      if(initializer != nullptr){
+        body = std::make_shared<Block>(
+          std::vector<std::shared_ptr<Stmt>>{
+            initializer,
+            body
+          }
+        );
+      }
+
+      return body;
     }
 
     // Function equivalent to the "ifStatement" rule.
@@ -109,6 +172,16 @@ class Parser{
       return statements;
     }
 
+    // Function equivalent to the "while" rule.
+    std::shared_ptr<Stmt> whileStatement(){
+      consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+      std::shared_ptr<Expr> condition = expression();
+      consume(TokenType::RIGHT_PAREN, "Expect ')' after 'while' condition.");
+      std::shared_ptr<Stmt> body = statement();
+
+      return std::make_shared<While>(condition, body);
+    }
+
     // Function equivalent to the "expression" rule.
     std::shared_ptr<Expr> expression(){
       return assignment();
@@ -117,7 +190,7 @@ class Parser{
     // Function equivalent to the "assignment" rule.
     // Remember that an assignment is also an expression whose resulting value is the R-value of it.
     std::shared_ptr<Expr> assignment(){
-      std::shared_ptr<Expr> expr = equality(); // This can either evaluate to a L-value or a R-value.
+      std::shared_ptr<Expr> expr = orExpression(); // This can either evaluate to a L-value or a R-value.
 
       if(match(TokenType::EQUAL)){
         Token equals = previous(); // This contains the token of TokenType::EQUAL
@@ -129,6 +202,32 @@ class Parser{
         }
 
         error(std::move(equals), "Invalid assignment target.");
+      }
+
+      return expr;
+    }
+
+    // Function equivalent to the "or" rule.
+    std::shared_ptr<Expr> orExpression(){
+      std::shared_ptr<Expr> expr = andExpression();
+
+      while(match(TokenType::OR)){
+        Token op = previous();
+        std::shared_ptr<Expr> right = andExpression();
+        expr = std::make_shared<Logical>(expr, std::move(op), right);
+      }
+
+      return expr;
+    }
+
+    // Function equivalent to the "and" rule.
+    std::shared_ptr<Expr> andExpression(){
+      std::shared_ptr<Expr> expr = equality();
+
+      while(match(TokenType::AND)){
+        Token op = previous();
+        std::shared_ptr<Expr> right = equality();
+        expr = std::make_shared<Logical>(expr, std::move(op), right);
       }
 
       return expr;

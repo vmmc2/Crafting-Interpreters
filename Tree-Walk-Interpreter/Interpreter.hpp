@@ -133,6 +133,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitWhileStmt(std::shared_ptr<While> stmt) override{
+      while(isTruthy(evaluate(stmt->condition))){
+        execute(stmt->body);
+      }
+
+      return {};
+    }
+
     std::any visitAssignExpr(std::shared_ptr<Assign> expr) override{
       std::any value = evaluate(expr->value);
       environment->assign(expr->name, value);
@@ -183,6 +191,18 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       // Unreachable
       return {};
+    }
+
+    std::any visitLogicalExpr(std::shared_ptr<Logical> expr) override{
+      std::any left = evaluate(expr->left);
+
+      if(expr->op.type == TokenType::OR){
+        if(isTruthy(left)) return left; // Short-Circuit from left to right (left-associative).
+      }else if(expr->op.type == TokenType::AND){
+        if(!isTruthy(left)) return left; // Short-Circuit from left to right (left-associative).
+      }
+
+      return evaluate(expr->right);
     }
 
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{
