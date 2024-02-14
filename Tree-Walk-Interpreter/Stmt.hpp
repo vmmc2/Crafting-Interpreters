@@ -62,7 +62,7 @@ struct If : Stmt, public std::enable_shared_from_this<If>{
   {}
 
   std::any accept(StmtVisitor& visitor) override{
-    visitor.visitIfStmt(shared_from_this());
+    return visitor.visitIfStmt(shared_from_this());
   }
 };
 
