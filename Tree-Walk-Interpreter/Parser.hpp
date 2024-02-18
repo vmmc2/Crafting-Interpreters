@@ -319,7 +319,38 @@ class Parser{
         std::shared_ptr<Expr> right = unary();
         expr = std::make_shared<Unary>(std::move(op), right);
       }else{
-        expr = primary();
+        expr = call();
+      }
+
+      return expr;
+    }
+
+    // Auxiliar function to the one tha implements the "call" rule.
+    std::shared_ptr<Expr> finishCall(std::shared_ptr<Expr> callee){
+      std::vector<std::shared_ptr<Expr>> arguments;
+
+      if(!check(TokenType::RIGHT_PAREN)){
+        do{
+          arguments.push_back(expression());
+        }while(match(TokenType::COMMA));
+      }
+
+      Token paren = consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments of a function/method.");
+
+      return std::make_shared<Call>(callee, std::move(paren), std::move(arguments));
+    }
+
+    // Function equivalent to the "call" rule.
+    // This works in a left-associative way... Think of the following chaining of functions: f(1)(2)(3)
+    std::shared_ptr<Expr> call(){
+      std::shared_ptr<Expr> expr = primary();
+
+      while(true){
+        if(match(TokenType::LEFT_PAREN)){
+          expr = finishCall(expr);
+        }else{
+          break;
+        }
       }
 
       return expr;
