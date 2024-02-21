@@ -7,6 +7,7 @@
 #include "Stmt.hpp"
 #include "Error.hpp"
 #include "Environment.hpp"
+#include "LoxCallable.hpp"
 #include "RuntimeError.hpp"
 
 class Interpreter : public ExprVisitor, public StmtVisitor{
@@ -191,6 +192,26 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       // Unreachable
       return {};
+    }
+
+    std::any visitCallExpr(std::shared_ptr<Call> expr) override{
+      // We need to verify whether the callee is valid or not (This is done through evaluation)...
+      std::any callee = evaluate(expr->callee);
+
+      std::vector<std::any> arguments;
+      for(const std::shared_ptr<Expr>& argument : expr->arguments){
+        arguments.push_back(evaluate(argument));
+      }
+
+      std::shared_ptr<LoxCallable> function;
+
+      if(callee.type() == typeid(std::shared_ptr<LoxFuncion>)){
+        function = std::any_cast<std::shared_ptr<LoxFunction>>(callee);
+      }else{
+        throw RuntimeError{expr->paren, "Can only call functions and classes."};
+      }
+
+      return function->call(*this, std::move(arguments));
     }
 
     std::any visitLogicalExpr(std::shared_ptr<Logical> expr) override{
