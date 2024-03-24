@@ -309,7 +309,7 @@ class Parser{
     // Unary operators (-, !) are all Right-Associative operators.
     // It creates a right-associative nested tree of unary operator nodes.
     // Note that if the parser never encounters an unary operator, then it never enters the if-clause.
-    // In that case, the unary() method effectively calls and returns primary().
+    // In that case, the unary() method will enter the else-clause and effectively calls and returns call().
     // In that way, this method matches an unary operator or anything of higher precedence.
     std::shared_ptr<Expr> unary(){
       std::shared_ptr<Expr> expr;
@@ -325,7 +325,7 @@ class Parser{
       return expr;
     }
 
-    // Auxiliar function to the one tha implements the "call" rule.
+    // Auxiliar function to the one that implements the "call" rule.
     std::shared_ptr<Expr> finishCall(std::shared_ptr<Expr> callee){
       std::vector<std::shared_ptr<Expr>> arguments;
 
@@ -344,7 +344,7 @@ class Parser{
     }
 
     // Function equivalent to the "call" rule.
-    // This works in a left-associative way... Think of the following chaining of functions: f(1)(2)(3)
+    // This works in a left-associative way. Think of the following chaining of functions: f(1)(2)(3)
     std::shared_ptr<Expr> call(){
       std::shared_ptr<Expr> expr = primary();
 
