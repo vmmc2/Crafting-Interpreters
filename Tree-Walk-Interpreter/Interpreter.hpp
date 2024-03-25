@@ -195,7 +195,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitCallExpr(std::shared_ptr<Call> expr) override{
-      // We need to verify whether the callee is valid or not (This is done through evaluation)...
+      // We need to verify whether the callee is valid or not (This is done through evaluation).
       std::any callee = evaluate(expr->callee);
 
       std::vector<std::any> arguments;
@@ -209,6 +209,10 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
         function = std::any_cast<std::shared_ptr<LoxFunction>>(callee);
       }else{
         throw RuntimeError{expr->paren, "Can only call functions and classes."};
+      }
+
+      if(arguments.size() != function->arity()){
+        throw RuntimeError{expr->paren, "Expected " + std::to_string(function->arity()) + " arguments, but received " + std::to_string(arguments.size()) + "."};
       }
 
       return function->call(*this, std::move(arguments));
