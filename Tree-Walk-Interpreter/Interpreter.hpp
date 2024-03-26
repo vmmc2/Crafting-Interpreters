@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <chrono>
 #include <iostream>
 
 #include "Expr.hpp"
@@ -10,10 +11,28 @@
 #include "LoxCallable.hpp"
 #include "RuntimeError.hpp"
 
+class NativeClock : public LoxCallable {
+  int arity() override{
+    return 0;
+  }
+
+  std::any call(Interpreter& interpreter, std::vector<std::any> arguments) override{
+    auto ticks = std::chrono::system_clock::now().time_since_epoch();
+    auto timeElapsedInMili = std::chrono::duration<double>{ticks}.count() / 1000.0;
+
+    return timeElapsedInMili;
+  }
+
+  std::string toString() override{
+    return "<native fun>";
+  }
+};
+
 class Interpreter : public ExprVisitor, public StmtVisitor{
   private:
     // The variables stay in memory as long as the interpreter is still running.
-    std::shared_ptr<Environment> environment{ new Environment };
+    std::shared_ptr<Environment> globals{ new Environment };
+    std::shared_ptr<Environment> environment = globals;
 
     bool isTruthy(std::any object){
       if(object.type() == typeid(nullptr)) return false;
@@ -93,6 +112,10 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
   
   public:
+    Interpreter(){
+      globals->define("clock", std::shared_ptr<NativeClock>{});
+    }
+
     std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
       evaluate(stmt->expression);
 
