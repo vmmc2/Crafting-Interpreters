@@ -9,6 +9,7 @@
 #include "Error.hpp"
 #include "Environment.hpp"
 #include "LoxCallable.hpp"
+#include "LoxFunction.hpp"
 #include "RuntimeError.hpp"
 
 class NativeClock : public LoxCallable {
@@ -31,7 +32,6 @@ class NativeClock : public LoxCallable {
 class Interpreter : public ExprVisitor, public StmtVisitor{
   private:
     // The variables stay in memory as long as the interpreter is still running.
-    std::shared_ptr<Environment> globals{ new Environment };
     std::shared_ptr<Environment> environment = globals;
 
     bool isTruthy(std::any object){
@@ -92,6 +92,19 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       return;
     }
+  
+  public:
+    std::shared_ptr<Environment> globals{ new Environment };
+
+    Interpreter(){
+      globals->define("clock", std::shared_ptr<NativeClock>{});
+    }
+
+    std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
+      evaluate(stmt->expression);
+
+      return {};
+    }
 
     void executeBlock(std::vector<std::shared_ptr<Stmt>> statements, std::shared_ptr<Environment> environment){
       std::shared_ptr<Environment> previous = this->environment;
@@ -109,17 +122,6 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       this->environment = previous;
 
       return;
-    }
-  
-  public:
-    Interpreter(){
-      globals->define("clock", std::shared_ptr<NativeClock>{});
-    }
-
-    std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
-      evaluate(stmt->expression);
-
-      return {};
     }
 
     std::any visitIfStmt(std::shared_ptr<If> stmt) override{
@@ -228,8 +230,8 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
       std::shared_ptr<LoxCallable> function;
 
-      if(callee.type() == typeid(std::shared_ptr<LoxFuncion>)){
-        function = std::any_cast<std::shared_ptr<LoxFunction>>(callee);
+      if(callee.type() == typeid(std::shared_ptr<LoxFunction>)){
+        function = std::any_cast<std::shared_ptr<LoxFunction>>(callee); // Isso eh msm um erro??
       }else{
         throw RuntimeError{expr->paren, "Can only call functions and classes."};
       }

@@ -26,6 +26,9 @@ class Parser{
 
     std::shared_ptr<Stmt> declaration(){
       try{
+        if(match(TokenType::FUN)){
+          return function("function"); // From here on, we go to the "function" rule of our grammar, since we've consumed the keyword/token "fun".
+        }
         if(match(TokenType::VAR)){
           return varDeclaration();
         }
@@ -157,6 +160,30 @@ class Parser{
       consume(TokenType::SEMICOLON, "Expected a ';' at the end of an expression statement");
 
       return std::make_shared<Expression>(expr);
+    }
+
+    // Function equivalent to the "function" rule.
+    std::shared_ptr<Stmt> function(std::string kind){
+      Token name = consume(TokenType::IDENTIFIER, "Expect a " + kind + " name."); // Stores the token with the name of the function.
+
+      consume(TokenType::LEFT_PAREN, "Expect '(' after a " + kind + " name."); // Consume the left parenthesis after a function name in a function declaration.
+      std::vector<Token> parameters;
+
+      if(!check(TokenType::RIGHT_PAREN)){ // This if handles the case of zero parameters.
+        do{ // This do-while loop parses the parameters as long as we find commas to separate them.
+          if(parameters.size() >= 255){ // Here, we validate at parse time that you don’t exceed the maximum number of parameters a function is allowed to have.
+            error(peek(), "Can't have more than 255 parameters.");
+          }
+
+          parameters.push_back(consume(TokenType::IDENTIFIER, "Expect a parameter name."));
+        }while(match(TokenType::COMMA));
+      }
+      consume(TokenType::RIGHT_PAREN, "Expect a ')' after parameters."); // Finally, whether the function has 0 or more parameters, we should expect a ')' character.
+    
+      consume(TokenType::LEFT_BRACE, "Expect a '{' before a " + kind + " body.");
+      std::vector<std::shared_ptr<Stmt>> body = block();
+
+      return std::make_shared<Function>(std::move(name), std::move(parameters), std::move(body));
     }
 
     // Function equivalent to the "block" rule.
@@ -386,7 +413,7 @@ class Parser{
     }
 
     // Function that checks to see if the next token is of the expected type.
-    // If so, it consumes the token and everything is groovy.
+    // If so, it consumes the token, returns it by calling the 'advance' method and everything is groovy.
     // Otherwise, an error is reported with a message.
     Token consume(TokenType type, std::string_view message){
       if(check(type)) return advance();
