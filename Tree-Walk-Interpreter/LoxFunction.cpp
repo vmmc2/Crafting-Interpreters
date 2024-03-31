@@ -10,7 +10,7 @@ LoxFunction::LoxFunction(std::shared_ptr<Function> declaration)
 {}
 
 std::string LoxFunction::toString(){
-  return "<fun " + declaration->name.lexeme + ">";
+  return "<fun " + declaration->name.lexeme + ">"; // This method is responsible for print the function value (not the function call).
 }
 
 int LoxFunction::arity(){

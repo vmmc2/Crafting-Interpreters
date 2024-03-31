@@ -106,6 +106,13 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitFunctionStmt(std::shared_ptr<Function> stmt) override{
+      std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(stmt);
+      environment->define(stmt->name.lexeme, function);
+
+      return nullptr;
+    }
+
     void executeBlock(std::vector<std::shared_ptr<Stmt>> statements, std::shared_ptr<Environment> environment){
       std::shared_ptr<Environment> previous = this->environment;
 
