@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "Interpreter.hpp"
 #include "LoxCallable.hpp"
 
 class Environment;
@@ -13,6 +14,7 @@ class Function;
 class LoxFunction : LoxCallable{
   private:
     std::shared_ptr<Function> declaration;
+    std::shared_ptr<Environment> closure;
 
   public:
     LoxFunction(std::shared_ptr<Function> declaration);

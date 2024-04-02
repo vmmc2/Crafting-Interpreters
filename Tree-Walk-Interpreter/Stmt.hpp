@@ -9,8 +9,10 @@
 
 struct Block;
 struct Expression;
+struct Function;
 struct If;
 struct Print;
+struct Return;
 struct Var;
 struct While;
 
@@ -64,7 +66,7 @@ struct Function : Stmt, public std::enable_shared_from_this<Function>{
   {}
 
   std::any accept(StmtVisitor& visitor) override{
-    visitor.visitFunctionStmt(shared_from_this());
+    return visitor.visitFunctionStmt(shared_from_this());
   }
 };
 
@@ -103,7 +105,7 @@ struct Return : Stmt, public std::enable_shared_from_this<Return>{
   {}
 
   std::any accept(StmtVisitor& visitor) override{
-    visitor.visitReturnStmt(shared_from_this());
+    return visitor.visitReturnStmt(shared_from_this());
   }
 };
 

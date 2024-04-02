@@ -71,7 +71,7 @@ struct Call : Expr, public std::enable_shared_from_this<Call>{
   {}
 
   std::any accept(ExprVisitor& visitor) override{
-    visitor.visitCallExpr(shared_from_this());
+    return visitor.visitCallExpr(shared_from_this());
   }
 };
 

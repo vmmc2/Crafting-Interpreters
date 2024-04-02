@@ -1,21 +1,26 @@
-# Simple Makefile to compile a C++ file
-
 # Compiler
 CXX = g++
 
 # Compiler flags
 CXXFLAGS = -std=c++17
 
-# Source file
-SRCS = Lox.cpp
+# Source files
+SRCS = LoxFunction.cpp Lox.cpp
+
+# Object files
+OBJS = $(SRCS:.cpp=.o)
 
 # Executable name
-TARGET = test
+EXEC = myprogram
 
-all: $(TARGET)
+# Main target
+$(EXEC): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(EXEC)
 
-$(TARGET): $(SRCS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRCS)
+# Compile source files to object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Clean rule
 clean:
-	rm -f $(TARGET)
+	rm -f $(OBJS) $(EXEC)
