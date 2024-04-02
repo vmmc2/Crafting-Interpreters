@@ -66,6 +66,9 @@ class Parser{
       if(match(TokenType::LEFT_BRACE)){
         return std::make_shared<Block>(block());
       }
+      if(match(TokenType::RETURN)){
+        return returnStatement();
+      }
       if(match(TokenType::WHILE)){
         return whileStatement();
       }
@@ -152,6 +155,20 @@ class Parser{
       consume(TokenType::SEMICOLON, "Expected a ';' at the end of a PRINT statement.");
 
       return std::make_shared<Print>(value);
+    }
+
+    // Function equivalent to the "returnStatement" rule.
+    std::shared_ptr<Stmt> returnStatement(){
+      Token keyword = previous();
+      std::shared_ptr<Expr> value = nullptr;
+
+      if(!check(TokenType::SEMICOLON)){ // If the there is no ';' token after the 'return' token, then we expect an expression.
+        value = expression();
+      }
+
+      consume(TokenType::SEMICOLON, "Expect a ';' after a return value"); // In both cases (where we have and where we don't have a return value) we expect a ';' at the end of the return statement.
+
+      return std::make_shared<Return>(keyword, value);
     }
 
     // Function equivalent to the "expressionStatement" rule.

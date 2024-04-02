@@ -10,6 +10,7 @@
 #include "Environment.hpp"
 #include "LoxCallable.hpp"
 #include "LoxFunction.hpp"
+#include "LoxReturn.hpp"
 #include "RuntimeError.hpp"
 
 class NativeClock : public LoxCallable {
@@ -145,6 +146,16 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       std::any expr = evaluate(stmt->expression);
       std::cout << stringify(expr) << std::endl;
       return {};
+    }
+
+    std::any visitReturnStmt(std::shared_ptr<Return> stmt) override{
+      std::any value = nullptr;
+
+      if(stmt->value != nullptr){
+        value = evaluate(stmt->value);
+      }
+
+      throw LoxReturn{value};
     }
 
     std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{

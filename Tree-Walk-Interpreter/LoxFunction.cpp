@@ -23,7 +23,12 @@ std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> argum
   for(int i = 0; i < declaration->parameters.size(); i++){ // Execute the binding of the parameters of the LoxFunction to its respective arguments.
     environment->define(declaration->parameters[i].lexeme, arguments[i]);
   }
-  interpreter.executeBlock(declaration->body, environment); // Execute the body of the funtion by passing its statements and its current environment.
 
-  return nullptr;
+  try{
+    interpreter.executeBlock(declaration->body, environment); // Execute the body of the funtion by passing its statements and its current environment.
+  }catch(LoxReturn returnValue){
+    return returnValue.value;
+  }
+
+  return nullptr; // Automatically deals with the case where there is no 'return' statement in the body of the function. By default, in these cases, Lox functions return nil (nullptr).
 }
