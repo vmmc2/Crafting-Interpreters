@@ -243,6 +243,8 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitCallExpr(std::shared_ptr<Call> expr) override{
+      std::cout << "I am at visitCallExpr() method" << std::endl;
+      
       // We need to verify whether the callee is valid or not (This is done through evaluation).
       std::any callee = evaluate(expr->callee);
 
@@ -254,7 +256,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       std::shared_ptr<LoxCallable> function;
 
       if(callee.type() == typeid(std::shared_ptr<LoxFunction>)){
-        function = std::any_cast<std::shared_ptr<LoxFunction>>(callee); // Isso eh msm um erro??
+        function = std::any_cast<std::shared_ptr<LoxCallable>>(callee); // Isso eh msm um erro??
       }else{
         throw RuntimeError{expr->paren, "Can only call functions and classes."};
       }

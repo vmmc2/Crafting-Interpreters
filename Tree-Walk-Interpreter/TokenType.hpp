@@ -2,7 +2,6 @@
 
 #include <string>
 
-
 enum TokenType{
   // Single-Character Tokens
   LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
@@ -21,8 +20,7 @@ enum TokenType{
   FILE_END
 };
 
-
-std::string toString(TokenType type){
+inline std::string toString(TokenType type){
   static const std::string strings[] = {
     "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
     "COMMA", "DOT", "PLUS", "MINUS", "STAR", "SLASH", "SEMICOLON",

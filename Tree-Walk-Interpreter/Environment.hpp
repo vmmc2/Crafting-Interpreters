@@ -2,32 +2,36 @@
 
 #include <any>
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
+#include <utility>
+#include <functional>
 
 #include "Error.hpp"
 #include "Token.hpp"
 
 class Environment : public std::enable_shared_from_this<Environment>{
   private:
+    friend class Interpreter;
     std::shared_ptr<Environment> enclosing;
     std::map<std::string, std::any> values;
+
   public:
     Environment() // Constructor for the Global Environment (There's no enclosing environment).
-    : enclosing{nullptr}
+      : enclosing{nullptr}
     {}
 
     Environment(std::shared_ptr<Environment> enclosing) // Constructor for any non-global Environment that might receive an enclosing environment.
-    : enclosing{enclosing}
+      : enclosing{std::move(enclosing)}
     {}
 
-    void define(std::string name, std::any value){ // A new variable is always declared in the current innermost scope.
+    void define(const std::string& name, std::any value){ // A new variable is always declared in the current innermost scope.
       values[name] = std::move(value);
 
       return;
     }
 
-    void assign(Token name, std::any value){
+    void assign(const Token& name, std::any value){
       auto elem = values.find(name.lexeme);
       if(elem != values.end()){
         elem->second = std::move(value);
@@ -35,7 +39,7 @@ class Environment : public std::enable_shared_from_this<Environment>{
       }
 
       if(enclosing != nullptr){ // If a name was not found in the current scope. Try looking for it in the enclosing/outer scope it we reach the Global scope.
-        enclosing->assign(name, value);
+        enclosing->assign(name, std::move(value));
         return;
       }
 
@@ -43,7 +47,7 @@ class Environment : public std::enable_shared_from_this<Environment>{
       throw RuntimeError(name, "Undefined variable '" + name.lexeme + "'."); 
     }
 
-    std::any get(Token name){
+    std::any get(const Token& name){
       if(values.find(name.lexeme) != values.end()){
         return values[name.lexeme];
       }
@@ -53,6 +57,6 @@ class Environment : public std::enable_shared_from_this<Environment>{
       }
 
       // If the variable hasn't already been declared (does not exist inside the environment map), then we cannot get its value.
-      throw RuntimeError(name,"Undefined variable: '" + name.lexeme + "'.");
+      throw RuntimeError(name, "Undefined variable: '" + name.lexeme + "'.");
     }
 };

@@ -2,7 +2,7 @@
 CXX = g++
 
 # Compiler flags
-CXXFLAGS = -std=c++17
+CXXFLAGS = -std=c++20
 
 # Source files
 SRCS = LoxFunction.cpp Lox.cpp

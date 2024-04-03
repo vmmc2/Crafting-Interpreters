@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "Interpreter.hpp"
+class Interpreter;
 
 class LoxCallable{
   public:

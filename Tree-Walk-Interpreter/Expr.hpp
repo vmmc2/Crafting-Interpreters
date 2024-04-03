@@ -7,8 +7,6 @@
 
 #include "Token.hpp"
 
-struct Expr;
-
 struct Assign;
 struct Binary;
 struct Call;
