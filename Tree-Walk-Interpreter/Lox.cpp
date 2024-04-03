@@ -1,13 +1,19 @@
+#include <string>
+#include <vector>
 #include <cstring> // std::strerror
 #include <fstream> 
 #include <iostream> // std::getline
-#include <string>
-#include <vector>
 
-#include "AstPrinter.hpp"
-#include "Scanner.hpp"
+#include "Error.hpp"
 #include "Parser.hpp"
+#include "Scanner.hpp"
+#include "AstPrinter.hpp"
 #include "Interpreter.hpp"
+
+// It's not good practice to include .cpp files, but in our case it
+// allows us to lay out the files similarly to the Java code while
+// avoiding circular dependencies.
+#include "LoxFunction.cpp" // Chapter 10 - Functions
 
 Interpreter interpreter; 
 

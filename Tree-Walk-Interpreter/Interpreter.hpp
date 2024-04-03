@@ -2,32 +2,38 @@
 
 #include <any>
 #include <chrono>
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
 #include <iostream>
+#include <stdexcept>
 
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Error.hpp"
+#include "LoxReturn.hpp"
 #include "Environment.hpp"
 #include "LoxCallable.hpp"
 #include "LoxFunction.hpp"
-#include "LoxReturn.hpp"
 #include "RuntimeError.hpp"
 
 class NativeClock : public LoxCallable {
-  int arity() override{
-    return 0;
-  }
+  public:
+    int arity() override{
+      return 0;
+    }
 
-  std::any call(Interpreter& interpreter, std::vector<std::any> arguments) override{
-    auto ticks = std::chrono::system_clock::now().time_since_epoch();
-    auto timeElapsedInMili = std::chrono::duration<double>{ticks}.count() / 1000.0;
+    std::any call(Interpreter& interpreter, std::vector<std::any> arguments) override{
+      auto ticks = std::chrono::system_clock::now().time_since_epoch();
+      auto timeElapsedInSecs = std::chrono::duration<double>{ticks}.count() / 1000.0;
 
-    return timeElapsedInMili;
-  }
+      return timeElapsedInSecs;
+    }
 
-  std::string toString() override{
-    return "<native fun>";
-  }
+    std::string toString() override{
+      return "<native fun>";
+    }
 };
 
 class Interpreter : public ExprVisitor, public StmtVisitor{
@@ -37,13 +43,23 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     // The variables stay in memory as long as the interpreter is still running.
     std::shared_ptr<Environment> environment = globals;
 
-    bool isTruthy(std::any object){
+    void checkNumberOperand(const Token& op, const std::any& operand){
+      if(operand.type() == typeid(double)) return;
+      throw RuntimeError{op, "Operand must be a number."};
+    }
+
+    void checkNumberOperands(const Token& op, const std::any& left, const std::any& right){
+      if(left.type() == typeid(double) && right.type() == typeid(double)) return;
+      throw RuntimeError{op, "Operands must be both numbers"};
+    }
+
+    bool isTruthy(const std::any& object){
       if(object.type() == typeid(nullptr)) return false;
       if(object.type() == typeid(bool)) return std::any_cast<bool>(object);
       return true;
     }
 
-    bool isEqual(std::any left, std::any right){
+    bool isEqual(const std::any& left, const std::any& right){
       if(left.type() == typeid(nullptr) && right.type() == typeid(nullptr)){
         return true;
       }
@@ -63,7 +79,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return false;
     }
 
-    std::string stringify(std::any object){
+    std::string stringify(const std::any& object){
       if(object.type() == typeid(nullptr)) return "nil";
 
       if(object.type() == typeid(double)){
@@ -83,6 +99,10 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
         return std::any_cast<bool>(object) ? "true" : "false";
       }
 
+      if(object.type() == typeid(std::shared_ptr<LoxFunction>)){
+        return std::any_cast<std::shared_ptr<LoxFunction>>(object)->toString();
+      }
+
       return "Error in stringify: object type not recognized.";
     }
 
@@ -95,31 +115,8 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       return;
     }
-  
-  public:
-    std::shared_ptr<Environment> globals{ new Environment };
 
-    Interpreter(){
-      globals->define("clock", std::shared_ptr<NativeClock>{});
-    }
-
-    std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
-      evaluate(stmt->expression);
-
-      return {};
-    }
-
-    std::any visitFunctionStmt(std::shared_ptr<Function> stmt) override{
-      // This is the environment that is active when the function is declared not when it’s called, which is what we want.
-      // It represents the lexical scope surrounding the function declaration.
-      // Finally, when we call the function, we use that environment as the call’s parent instead of going straight to globals.
-      std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(stmt, environment);
-      environment->define(stmt->name.lexeme, function);
-
-      return nullptr;
-    }
-
-    void executeBlock(std::vector<std::shared_ptr<Stmt>> statements, std::shared_ptr<Environment> environment){
+    void executeBlock(const std::vector<std::shared_ptr<Stmt>>& statements, std::shared_ptr<Environment> environment){
       std::shared_ptr<Environment> previous = this->environment;
 
       try{
@@ -135,6 +132,35 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       this->environment = previous;
 
       return;
+    }
+  
+  public:
+    std::shared_ptr<Environment> globals{ new Environment };
+
+    Interpreter(){
+      globals->define("clock", std::shared_ptr<NativeClock>{});
+    }
+
+    std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
+      executeBlock(stmt->statements, std::make_shared<Environment>(environment));
+
+      return {};
+    }
+
+    std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
+      evaluate(stmt->expression);
+
+      return {};
+    }
+
+    std::any visitFunctionStmt(std::shared_ptr<Function> stmt) override{
+      // This is the environment that is active when the function is declared not when it’s called, which is what we want.
+      // It represents the lexical scope surrounding the function declaration.
+      // Finally, when we call the function, we use that environment as the call’s parent instead of going straight to globals.
+      std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(stmt, environment);
+      environment->define(stmt->name.lexeme, function);
+
+      return {};
     }
 
     std::any visitIfStmt(std::shared_ptr<If> stmt) override{
@@ -161,12 +187,6 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       }
 
       throw LoxReturn{value};
-    }
-
-    std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
-      executeBlock(stmt->statements, std::make_shared<Environment>(environment));
-
-      return {};
     }
 
     std::any visitVarStmt(std::shared_ptr<Var> stmt) override{
@@ -243,8 +263,6 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitCallExpr(std::shared_ptr<Call> expr) override{
-      std::cout << "I am at visitCallExpr() method" << std::endl;
-      
       // We need to verify whether the callee is valid or not (This is done through evaluation).
       std::any callee = evaluate(expr->callee);
 
@@ -253,10 +271,11 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
         arguments.push_back(evaluate(argument));
       }
 
+      // Pointers in a std::any wrapper must be unwrapped before they can be cast
       std::shared_ptr<LoxCallable> function;
 
       if(callee.type() == typeid(std::shared_ptr<LoxFunction>)){
-        function = std::any_cast<std::shared_ptr<LoxCallable>>(callee); // Isso eh msm um erro??
+        function = std::any_cast<std::shared_ptr<LoxFunction>>(callee);
       }else{
         throw RuntimeError{expr->paren, "Can only call functions and classes."};
       }
@@ -266,6 +285,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       }
 
       return function->call(*this, std::move(arguments));
+    }
+
+    std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) override{
+      return evaluate(expr->expression);
+    }
+
+    std::any visitLiteralExpr(std::shared_ptr<Literal> expr) override{
+      return expr->value;
     }
 
     std::any visitLogicalExpr(std::shared_ptr<Logical> expr) override{
@@ -295,31 +322,13 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
-    void checkNumberOperand(Token op, std::any operand){
-      if(operand.type() == typeid(double)) return;
-      throw RuntimeError{op, "Operand must be a number."};
-    }
-
-    void checkNumberOperands(Token op, std::any left, std::any right){
-      if(left.type() == typeid(double) && right.type() == typeid(double)) return;
-      throw RuntimeError{op, "Operands must be both numbers"};
-    }
-
-    std::any visitLiteralExpr(std::shared_ptr<Literal> expr) override{
-      return expr->value;
-    }
-
-    std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) override{
-      return evaluate(expr->expression);
-    }
-
     std::any visitVariableExpr(std::shared_ptr<Variable> expr) override{
       return environment->get(expr->name);
     }
 
-    void interpret(std::vector<std::shared_ptr<Stmt>> statements){
+    void interpret(const std::vector<std::shared_ptr<Stmt>>& statements){
       try{
-        for(std::shared_ptr<Stmt> statement : statements){
+        for(const std::shared_ptr<Stmt>& statement : statements){
           execute(statement);
         }
       }catch(RuntimeError error){
