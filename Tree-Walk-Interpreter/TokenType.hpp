@@ -20,7 +20,7 @@ enum TokenType{
   FILE_END
 };
 
-inline std::string toString(TokenType type){
+std::string toString(TokenType type){
   static const std::string strings[] = {
     "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
     "COMMA", "DOT", "PLUS", "MINUS", "STAR", "SLASH", "SEMICOLON",

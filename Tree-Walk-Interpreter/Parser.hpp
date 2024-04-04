@@ -180,7 +180,7 @@ class Parser{
     }
 
     // Function equivalent to the "function" rule.
-    std::shared_ptr<Stmt> function(std::string kind){
+    std::shared_ptr<Function> function(std::string kind){
       Token name = consume(TokenType::IDENTIFIER, "Expect a " + kind + " name."); // Stores the token with the name of the function.
 
       consume(TokenType::LEFT_PAREN, "Expect '(' after a " + kind + " name."); // Consume the left parenthesis after a function name in a function declaration.
@@ -356,17 +356,13 @@ class Parser{
     // In that case, the unary() method will enter the else-clause and effectively calls and returns call().
     // In that way, this method matches an unary operator or anything of higher precedence.
     std::shared_ptr<Expr> unary(){
-      std::shared_ptr<Expr> expr;
-
       if(match(TokenType::MINUS, TokenType::BANG)){
         Token op = previous();
         std::shared_ptr<Expr> right = unary();
-        expr = std::make_shared<Unary>(std::move(op), right);
-      }else{
-        expr = call();
+        return std::make_shared<Unary>(std::move(op), right);
       }
 
-      return expr;
+      return call();
     }
 
     // Auxiliar function to the one that implements the "call" rule.

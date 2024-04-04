@@ -14,7 +14,7 @@ class Scanner{
     int line = 1;
     int start = 0;
     int current = 0;
-    std::string source;
+    std::string_view source;
     std::vector<Token> tokens;
     std::map<std::string, TokenType> keywords = {
         {"and",    TokenType::AND},
@@ -35,7 +35,9 @@ class Scanner{
         {"while",  TokenType::WHILE},
     };
 
-    Scanner(std::string source) : source(std::move(source)) {}
+    Scanner(std::string_view source)
+      : source(std::move(source))
+    {}
 
     // Method that scans the whole source code and returns a sequence of tokens.
     std::vector<Token> scanTokens(){
@@ -67,7 +69,7 @@ class Scanner{
 
     // Method that creates and adds the current token (generated from the current lexeme) to the list of tokens produced by the Scanner.
     void addToken(TokenType type, std::any literal){
-      std::string lexeme = source.substr(start, current - start);
+      std::string lexeme{source.substr(start, current - start)};
       tokens.push_back(Token(line, type, literal, lexeme));
 
       return;
@@ -158,7 +160,7 @@ class Scanner{
       while(isAlphaNumeric(peek())) advance();
 
       TokenType type;
-      std::string lexeme = source.substr(start, current - start);
+      std::string lexeme = std::string{source.substr(start, current - start)};
       if(keywords.find(lexeme) != keywords.end()){
         type = keywords[lexeme];
       }else{
@@ -182,7 +184,7 @@ class Scanner{
         while(isDigit(peek())) advance();
       }
 
-      addToken(TokenType::NUMBER, std::stod(source.substr(start, current - start)));
+      addToken(TokenType::NUMBER, std::stod(std::string{source.substr(start, current - start)}));
 
       return;
     }
@@ -203,7 +205,7 @@ class Scanner{
       // Close the '"' character.
       advance();
 
-      std::string literal = source.substr(start + 1, current - start - 2);
+      std::string literal = std::string{source.substr(start + 1, current - start - 2)};
       addToken(TokenType::STRING, literal);
 
       return;

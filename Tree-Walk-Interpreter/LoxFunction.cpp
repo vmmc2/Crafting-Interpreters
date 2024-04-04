@@ -1,9 +1,9 @@
 #include <utility>
 
+#include "Stmt.hpp"
 #include "Environment.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
-#include "Stmt.hpp"
 
 LoxFunction::LoxFunction(std::shared_ptr<Function> declaration, std::shared_ptr<Environment> closure)
   : declaration{std::move(declaration)}, closure{std::move(closure)}
@@ -18,8 +18,6 @@ int LoxFunction::arity(){
 }
 
 std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> arguments){
-  std::cout << "I am at LoxFunction::call()" << std::endl;
-
   auto environment = std::make_shared<Environment>(closure); // Create the current local environment of the LoxFunction.
 
   for(int i = 0; i < declaration->parameters.size(); i++){ // Execute the binding of the parameters of the LoxFunction to its respective arguments.

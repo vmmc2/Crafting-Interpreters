@@ -37,12 +37,12 @@ class NativeClock : public LoxCallable {
 };
 
 class Interpreter : public ExprVisitor, public StmtVisitor{
-  friend class LoxFuntion;
+  friend class LoxFunction;
+
+  public: std::shared_ptr<Environment> globals{ new Environment };
+  private: std::shared_ptr<Environment> environment = globals;
 
   private:
-    // The variables stay in memory as long as the interpreter is still running.
-    std::shared_ptr<Environment> environment = globals;
-
     void checkNumberOperand(const Token& op, const std::any& operand){
       if(operand.type() == typeid(double)) return;
       throw RuntimeError{op, "Operand must be a number."};
@@ -135,8 +135,6 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
   
   public:
-    std::shared_ptr<Environment> globals{ new Environment };
-
     Interpreter(){
       globals->define("clock", std::shared_ptr<NativeClock>{});
     }
@@ -157,7 +155,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       // This is the environment that is active when the function is declared not when it’s called, which is what we want.
       // It represents the lexical scope surrounding the function declaration.
       // Finally, when we call the function, we use that environment as the call’s parent instead of going straight to globals.
-      std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(stmt, environment);
+      auto function = std::make_shared<LoxFunction>(stmt, environment);
       environment->define(stmt->name.lexeme, function);
 
       return {};

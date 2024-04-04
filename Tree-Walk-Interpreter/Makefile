@@ -2,10 +2,10 @@
 CXX = g++
 
 # Compiler flags
-CXXFLAGS = -std=c++20
+CXXFLAGS = -std=c++17
 
 # Source files
-SRCS = LoxFunction.cpp Lox.cpp
+SRCS = Lox.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

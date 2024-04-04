@@ -13,9 +13,10 @@ class Token{
     const std::any literal;
     const std::string lexeme;
 
-    Token(int line, TokenType type, std::any literal, std::string lexeme) :
-      line(line), type(type), literal(std::move(literal)), lexeme(std::move(lexeme)) {}
-        
+    Token(int line, TokenType type, std::any literal, std::string lexeme)
+      : line{line}, type{type}, literal{std::move(literal)}, lexeme{std::move(lexeme)}
+    {}
+
     std::string toString() const{
       std::string literal_text;
 

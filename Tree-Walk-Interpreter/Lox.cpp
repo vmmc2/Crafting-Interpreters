@@ -15,27 +15,7 @@
 // avoiding circular dependencies.
 #include "LoxFunction.cpp" // Chapter 10 - Functions
 
-Interpreter interpreter; 
-
-void run(std::string source){
-  Scanner scanner(source);
-  std::vector<Token> tokens = scanner.scanTokens();
-
-  // for(const Token& token : tokens){
-  //   std::cout << token.toString() << std::endl;
-  // }
-
-  Parser parser(tokens);
-  std::vector<std::shared_ptr<Stmt>> statements = parser.parse();
-
-  if(hadError) return;
-
-  // std::cout << AstPrinter{}.print(expression) << std::endl;
-
-  interpreter.interpret(statements);
-
-  return;
-}
+Interpreter interpreter{}; 
 
 std::string readFile(std::string_view path) {
   std::ifstream file{path.data(), std::ios::in | std::ios::binary | std::ios::ate};
@@ -51,6 +31,26 @@ std::string readFile(std::string_view path) {
   file.read(contents.data(), contents.size());
 
   return contents;
+}
+
+void run(std::string_view source){
+  Scanner scanner{source};
+  std::vector<Token> tokens = scanner.scanTokens();
+
+  // for(const Token& token : tokens){
+  //   std::cout << token.toString() << std::endl;
+  // }
+
+  Parser parser{tokens};
+  std::vector<std::shared_ptr<Stmt>> statements = parser.parse();
+
+  if(hadError) return;
+
+  // std::cout << AstPrinter{}.print(expression) << std::endl;
+
+  interpreter.interpret(statements);
+
+  return;
 }
 
 void runFile(std::string_view path){
