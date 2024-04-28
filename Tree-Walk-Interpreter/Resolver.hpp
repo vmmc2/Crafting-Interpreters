@@ -12,6 +12,13 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     Interpreter& interpreter;
     std::vector<std::map<std::string, bool>> scopes;
 
+    enum class FunctionType{
+      NONE,
+      FUNCTION
+    };
+
+    FunctionType currentFunction = FunctionType::NONE;
+
     void resolve(std::shared_ptr<Stmt> stmt){
       // Very similar to the "execute" method from the Interpreter class.
       stmt->accept(*this);
@@ -26,7 +33,10 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       return;
     }
 
-    void resolveFunction(std::shared_ptr<Function> function){
+    void resolveFunction(std::shared_ptr<Function> function, FunctionType type){
+      FunctionType enclosingFunction = currentFunction;
+      currentFunction = type;
+
       beginScope();
       for(const Token& param : function->parameters){
         declare(param);
@@ -34,6 +44,8 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       }
       resolve(function->body);
       endScope();
+
+      currentFunction = enclosingFunction;
 
       return;
     }
@@ -65,6 +77,9 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       if(scopes.empty()) return;
 
       std::map<std::string, bool>& scope = scopes.back();
+      if(scope.find(name.lexeme) != scope.end()){
+        error(name, "Already a variable with this name in this scope.");
+      }
       scope[name.lexeme] = false;
 
       return;
@@ -111,7 +126,7 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       declare(stmt->name);
       define(stmt->name);
 
-      resolveFunction(stmt);
+      resolveFunction(stmt, FunctionType::FUNCTION);
       return {};
     }
 
@@ -133,6 +148,10 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitReturnStmt(std::shared_ptr<Return> stmt) override{
+      if(currentFunction == FunctionType::NONE){
+        error(stmt->keyword, "Can't return from top-level code.");
+      }
+
       if(stmt->value != nullptr){
         resolve(stmt->value);
       }

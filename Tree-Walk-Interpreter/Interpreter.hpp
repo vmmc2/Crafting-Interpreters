@@ -40,9 +40,20 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
   friend class LoxFunction;
 
   public: std::shared_ptr<Environment> globals{ new Environment };
-  private: std::shared_ptr<Environment> environment = globals;
-
   private:
+    std::shared_ptr<Environment> environment = globals;
+    std::map<std::shared_ptr<Expr>, int> locals;
+
+    std::any lookUpVariable(const Token& name, std::shared_ptr<Expr> expr){
+      auto elem = locals.find(expr);
+      if(elem != locals.end()){
+        int distance = elem->second;
+        return environment->getAt(distance, name.lexeme);
+      }else{
+        return globals->get(name);
+      }
+    }
+
     void checkNumberOperand(const Token& op, const std::any& operand){
       if(operand.type() == typeid(double)) return;
       throw RuntimeError{op, "Operand must be a number."};
@@ -139,6 +150,11 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       globals->define("clock", std::shared_ptr<NativeClock>{});
     }
 
+    void resolve(std::shared_ptr<Expr> expr, int depth){
+      locals[expr] = depth;
+      return;
+    }
+
     std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
       executeBlock(stmt->statements, std::make_shared<Environment>(environment));
 
@@ -210,7 +226,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
     std::any visitAssignExpr(std::shared_ptr<Assign> expr) override{
       std::any value = evaluate(expr->value);
-      environment->assign(expr->name, value);
+      
+      auto elem = locals.find(expr);
+      if(elem != locals.end()){
+        int distance = elem->second;
+        environment->assignAt(distance, expr->name, value);
+      }else{
+        globals->assign(expr->name, value);
+      }
 
       return value;
     }
@@ -321,7 +344,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitVariableExpr(std::shared_ptr<Variable> expr) override{
-      return environment->get(expr->name);
+      return lookUpVariable(expr->name, expr);
     }
 
     void interpret(const std::vector<std::shared_ptr<Stmt>>& statements){

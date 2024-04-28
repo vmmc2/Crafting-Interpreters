@@ -7,6 +7,7 @@
 #include "Error.hpp"
 #include "Parser.hpp"
 #include "Scanner.hpp"
+#include "Resolver.hpp"
 #include "AstPrinter.hpp"
 #include "Interpreter.hpp"
 
@@ -47,6 +48,12 @@ void run(std::string_view source){
   if(hadError) return;
 
   // std::cout << AstPrinter{}.print(expression) << std::endl;
+
+  Resolver resolver{interpreter};
+  resolver.resolve(statements);
+
+  // Stop if there was a resolution error.
+  if (hadError) return;
 
   interpreter.interpret(statements);
 

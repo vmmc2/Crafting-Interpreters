@@ -31,6 +31,15 @@ class Environment : public std::enable_shared_from_this<Environment>{
       return;
     }
 
+    std::shared_ptr<Environment> ancestor(int distance){
+      std::shared_ptr<Environment> environment = shared_from_this();
+      for(int i = 0; i < distance; i++){
+        environment = environment->enclosing;
+      }
+
+      return environment;
+    }
+
     void assign(const Token& name, std::any value){
       auto elem = values.find(name.lexeme);
       if(elem != values.end()){
@@ -58,5 +67,15 @@ class Environment : public std::enable_shared_from_this<Environment>{
 
       // If the variable hasn't already been declared (does not exist inside the environment map), then we cannot get its value.
       throw RuntimeError(name, "Undefined variable: '" + name.lexeme + "'.");
+    }
+
+    void assignAt(int distance, const Token& name, std::any value){
+      ancestor(distance)->values[name.lexeme] = std::move(value);
+
+      return;
+    }
+
+    std::any getAt(int distance, const std::string& name){
+      return ancestor(distance)->values[name];
     }
 };
