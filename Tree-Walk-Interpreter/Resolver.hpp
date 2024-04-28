@@ -225,8 +225,12 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitVariableExpr(std::shared_ptr<Variable> expr) override{
-      if(!scopes.empty() && scopes.back()[expr->name.lexeme] == false){
-        error(expr->name, "Can't read local variable in its own initializer.");
+      if(!scopes.empty()){
+        auto& scope = scopes.back();
+        auto elem = scope.find(expr->name.lexeme);
+        if(elem != scope.end() && elem->second == false){
+          error(expr->name, "Can't read local variable in its own initializer.");
+        }
       }
       resolveLocal(expr, expr->name);
 
