@@ -116,6 +116,13 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitClassStmt(std::shared_ptr<Class> stmt) override{
+      declare(stmt->name);
+      define(stmt->name);
+
+      return {};
+    }
+
     std::any visitExpressionStmt(std::shared_ptr<Expression> stmt) override{
       resolve(stmt->expression);
 

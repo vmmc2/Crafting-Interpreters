@@ -12,6 +12,7 @@
 #include "Expr.hpp"
 #include "Stmt.hpp"
 #include "Error.hpp"
+#include "LoxClass.hpp"
 #include "LoxReturn.hpp"
 #include "Environment.hpp"
 #include "LoxCallable.hpp"
@@ -157,6 +158,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
     std::any visitBlockStmt(std::shared_ptr<Block> stmt) override{
       executeBlock(stmt->statements, std::make_shared<Environment>(environment));
+
+      return {};
+    }
+
+    std::any visitClassStmt(std::shared_ptr<Class> stmt) override{
+      environment->define(stmt->name.lexeme, nullptr);
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme);
+      environment->assign(stmt->name, std::move(klass));
 
       return {};
     }

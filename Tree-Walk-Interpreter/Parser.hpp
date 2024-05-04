@@ -23,9 +23,12 @@ class Parser{
     const std::vector<Token>& tokens;
     int current = 0; // Points to the index of the next token waiting to be consumed.
 
-
+    // Function equivalent to the "declaration" rule.
     std::shared_ptr<Stmt> declaration(){
       try{
+        if(match(TokenType::CLASS)){
+          return classDeclaration();
+        }
         if(match(TokenType::FUN)){
           return function("function"); // From here on, we go to the "function" rule of our grammar, since we've consumed the keyword/token "fun".
         }
@@ -39,7 +42,22 @@ class Parser{
       }
     }
 
-    // Function equivalent to the "declaration" rule.
+    // Function equivalent to the "classDecl" rule.
+    std::shared_ptr<Stmt> classDeclaration(){
+      Token name = consume(TokenType::IDENTIFIER, "Expect class name.");
+      consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
+
+      std::vector<std::shared_ptr<Function>> methods;
+      while(!check(TokenType::RIGHT_BRACE) && !isAtEnd()){
+        methods.push_back(function("method"));
+      }
+
+      consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
+
+      return std::make_shared<Class>(std::move(name), std::move(methods));
+    }
+
+    // Function equivalent to the "varDecl" rule.
     std::shared_ptr<Stmt> varDeclaration(){
       Token name = consume(TokenType::IDENTIFIER, "Expected variable name after keyword 'var'.");
       std::shared_ptr<Expr> initializer = nullptr;
