@@ -13,6 +13,7 @@ class LoxFunction;
 
 class LoxClass : public LoxCallable, public std::enable_shared_from_this<LoxClass>{
   private:
+    friend class LoxInstance;
     const std::string name;
   public:
     LoxClass(std::string name);

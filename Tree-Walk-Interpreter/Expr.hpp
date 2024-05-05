@@ -10,6 +10,7 @@
 struct Assign;
 struct Binary;
 struct Call;
+struct Get;
 struct Grouping;
 struct Literal;
 struct Logical;
@@ -20,6 +21,7 @@ struct ExprVisitor{
   virtual std::any visitAssignExpr(std::shared_ptr<Assign> expr) = 0;
   virtual std::any visitBinaryExpr(std::shared_ptr<Binary> expr) = 0;
   virtual std::any visitCallExpr(std::shared_ptr<Call> expr) = 0;
+  virtual std::any visitGetExpr(std::shared_ptr<Get> expr) = 0;
   virtual std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) = 0;
   virtual std::any visitLiteralExpr(std::shared_ptr<Literal> expr) = 0;
   virtual std::any visitLogicalExpr(std::shared_ptr<Logical> expr) = 0;
@@ -73,28 +75,28 @@ struct Call : Expr, public std::enable_shared_from_this<Call>{
   }
 };
 
-struct Unary : Expr, public std::enable_shared_from_this<Unary>{
-  const Token op;
-  const std::shared_ptr<Expr> right;
+struct Get : Expr, public std::enable_shared_from_this<Get>{
+  const Token name;
+  const std::shared_ptr<Expr> object;
 
-  Unary(Token op, std::shared_ptr<Expr> right)
-    : op{std::move(op)}, right{std::move(right)} 
+  Get(Token name, std::shared_ptr<Expr> object)
+    : name{std::move(name)}, object{std::move(object)}
   {}
 
   std::any accept(ExprVisitor& visitor) override{
-    return visitor.visitUnaryExpr(shared_from_this());
+    return visitor.visitGetExpr(shared_from_this());
   }
 };
 
-struct Variable : Expr, public std::enable_shared_from_this<Variable>{
-  const Token name;
+struct Grouping : Expr, std::enable_shared_from_this<Grouping>{
+  const std::shared_ptr<Expr> expression;
 
-  Variable(Token name)
-    : name{std::move(name)}
+  Grouping(std::shared_ptr<Expr> expression)
+    : expression{std::move(expression)}
   {}
 
   std::any accept(ExprVisitor& visitor) override{
-    return visitor.visitVariableExpr(shared_from_this());  
+    return visitor.visitGroupingExpr(shared_from_this());
   }
 };
 
@@ -124,14 +126,27 @@ struct Logical : Expr, public std::enable_shared_from_this<Logical>{
   }
 };
 
-struct Grouping : Expr, std::enable_shared_from_this<Grouping>{
-  const std::shared_ptr<Expr> expression;
+struct Unary : Expr, public std::enable_shared_from_this<Unary>{
+  const Token op;
+  const std::shared_ptr<Expr> right;
 
-  Grouping(std::shared_ptr<Expr> expression)
-    : expression{std::move(expression)}
+  Unary(Token op, std::shared_ptr<Expr> right)
+    : op{std::move(op)}, right{std::move(right)} 
   {}
 
   std::any accept(ExprVisitor& visitor) override{
-    return visitor.visitGroupingExpr(shared_from_this());
+    return visitor.visitUnaryExpr(shared_from_this());
+  }
+};
+
+struct Variable : Expr, public std::enable_shared_from_this<Variable>{
+  const Token name;
+
+  Variable(Token name)
+    : name{std::move(name)}
+  {}
+
+  std::any accept(ExprVisitor& visitor) override{
+    return visitor.visitVariableExpr(shared_from_this());  
   }
 };
