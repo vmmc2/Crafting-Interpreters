@@ -17,6 +17,7 @@
 #include "Environment.hpp"
 #include "LoxCallable.hpp"
 #include "LoxFunction.hpp"
+#include "LoxInstance.hpp"
 #include "RuntimeError.hpp"
 
 class NativeClock : public LoxCallable {
@@ -315,6 +316,15 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       }
 
       return function->call(*this, std::move(arguments));
+    }
+
+    std::any visitGetExpr(std::shared_ptr<Get> expr) override{
+      std::any object = evaluate(expr->object);
+      if(object.type() == typeid(std::shared_ptr<LoxInstance>)){
+        return std::any_cast<std::shared_ptr<LoxInstance>>(object)->get(expr->name);
+      }
+
+      throw RuntimeError(expr->name, "Only instances have properties.");
     }
 
     std::any visitGroupingExpr(std::shared_ptr<Grouping> expr) override{

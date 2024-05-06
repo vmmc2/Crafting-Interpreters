@@ -409,6 +409,9 @@ class Parser{
       while(true){
         if(match(TokenType::LEFT_PAREN)){
           expr = finishCall(expr);
+        }else if(match(TokenType::DOT)){
+          Token name = consume(TokenType::IDENTIFIER, "After '.' expect a property name.");
+          expr = std::make_shared<Get>(std::move(name), expr);
         }else{
           break;
         }
