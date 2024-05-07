@@ -261,6 +261,8 @@ class Parser{
         if(Variable* e = dynamic_cast<Variable*>(expr.get())){
           Token name = e->name;
           return std::make_shared<Assign>(std::move(name), value);
+        }else if(Get* get = dynamic_cast<Get*>(expr.get())){
+          return std::make_shared<Set>(get->object, get->name, value);
         }
 
         error(std::move(equals), "Invalid assignment target.");

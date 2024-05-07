@@ -231,6 +231,13 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
+    std::any visitSetExpr(std::shared_ptr<Set> expr) override{
+      resolve(expr->value);
+      resolve(expr->object);
+
+      return {};
+    }
+
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{
       resolve(expr->right);
       

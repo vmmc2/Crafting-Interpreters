@@ -347,6 +347,19 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return evaluate(expr->right);
     }
 
+    std::any visitSetExpr(std::shared_ptr<Set> expr) override{
+      std::any object = evaluate(expr->object);
+
+      if(object.type() != typeid(std::shared_ptr<LoxInstance>)){
+        throw RuntimeError(expr->name, "Only instances have fields.");
+      }
+
+      std::any value = evaluate(expr->value);
+      std::any_cast<std::shared_ptr<LoxInstance>>(object)->set(expr->name, value);
+
+      return value;
+    }
+
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{
       std::any right = evaluate(expr->right);
 
