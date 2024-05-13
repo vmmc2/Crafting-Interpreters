@@ -17,6 +17,13 @@ int LoxFunction::arity(){
   return declaration->parameters.size();
 }
 
+std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> instance){
+  auto environment = std::make_shared<Environment>(closure);
+  environment->define("this", instance);
+  
+  return std::make_shared<LoxFunction>(declaration, environment);
+}
+
 std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> arguments){
   auto environment = std::make_shared<Environment>(closure); // Create the current local environment of the LoxFunction.
 
@@ -30,5 +37,5 @@ std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> argum
     return returnValue.value;
   }
 
-  return nullptr; // Automatically deals with the case where there is no 'return' statement in the body of the function. By default, in these cases, Lox functions return nil (nullptr).
+  return nullptr; // Automatically deals with the case where there is no 'return' statement in the body of the function. By default, in these cases, Lox functions return nil.
 }

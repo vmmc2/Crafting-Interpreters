@@ -441,6 +441,9 @@ class Parser{
         consume(TokenType::RIGHT_PAREN, "Expected ')' after expression.");
         return std::make_shared<Grouping>(expr);
       }
+      if(match(TokenType::THIS)){
+        return std::make_shared<This>(previous());
+      }
       if(match(TokenType::IDENTIFIER)){
         return std::make_shared<Variable>(previous());
       }

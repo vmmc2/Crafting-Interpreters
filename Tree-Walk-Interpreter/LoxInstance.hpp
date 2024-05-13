@@ -5,7 +5,10 @@
 #include <memory>
 #include <string>
 
-class LoxClass;
+#include "LoxClass.hpp"
+#include "LoxFunction.hpp"
+
+class LoxFunction;
 class Token;
 
 class LoxInstance: public std::enable_shared_from_this<LoxInstance> {

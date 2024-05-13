@@ -14,10 +14,17 @@ class Resolver : public ExprVisitor, public StmtVisitor{
 
     enum class FunctionType{
       NONE,
-      FUNCTION
+      FUNCTION,
+      METHOD
+    };
+
+    enum class ClassType{
+      NONE,
+      CLASS
     };
 
     FunctionType currentFunction = FunctionType::NONE;
+    ClassType currentClass = ClassType::NONE;
 
     void resolve(std::shared_ptr<Stmt> stmt){
       // Very similar to the "execute" method from the Interpreter class.
@@ -117,8 +124,23 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitClassStmt(std::shared_ptr<Class> stmt) override{
+      ClassType enclosingClass = currentClass;
+      currentClass = ClassType::CLASS;
+
       declare(stmt->name);
       define(stmt->name);
+
+      beginScope();
+      scopes.back()["this"] = true;
+
+      for(std::shared_ptr<Function> method : stmt->methods){
+        FunctionType declaration = FunctionType::METHOD;
+        resolveFunction(method, declaration);
+      }
+
+      endScope();
+
+      currentClass = enclosingClass;
 
       return {};
     }
@@ -236,6 +258,16 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       resolve(expr->object);
 
       return {};
+    }
+
+    std::any visitThisExpr(std::shared_ptr<This> expr) override{
+      if(currentClass == ClassType::NONE){
+        error(expr->keyword, "Can't use 'this' outside of a class.");
+        return {};
+      }
+      resolveLocal(expr, expr->keyword);
+
+      return{};
     }
 
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{

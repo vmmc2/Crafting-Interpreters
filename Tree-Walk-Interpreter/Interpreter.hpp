@@ -165,7 +165,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
     std::any visitClassStmt(std::shared_ptr<Class> stmt) override{
       environment->define(stmt->name.lexeme, nullptr);
-      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme);
+      
+      std::map<std::string, std::shared_ptr<LoxFunction>> methods;
+      for(std::shared_ptr<Function> method : stmt->methods){
+        auto function = std::make_shared<LoxFunction>(method, environment);
+        methods[method->name.lexeme] = function;
+      }
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, methods);
+
       environment->assign(stmt->name, std::move(klass));
 
       return {};
@@ -358,6 +365,10 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       std::any_cast<std::shared_ptr<LoxInstance>>(object)->set(expr->name, value);
 
       return value;
+    }
+
+    std::any visitThisExpr(std::shared_ptr<This> expr) override{
+      return lookUpVariable(expr->keyword, expr);
     }
 
     std::any visitUnaryExpr(std::shared_ptr<Unary> expr) override{
