@@ -21,7 +21,7 @@ std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> inst
   auto environment = std::make_shared<Environment>(closure);
   environment->define("this", instance);
   
-  return std::make_shared<LoxFunction>(declaration, environment);
+  return std::make_shared<LoxFunction>(declaration, environment, isInitializer);
 }
 
 std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> arguments){
@@ -34,6 +34,10 @@ std::any LoxFunction::call(Interpreter& interpreter, std::vector<std::any> argum
   try{
     interpreter.executeBlock(declaration->body, environment); // Execute the body of the funtion by passing its statements and its current environment.
   }catch(LoxReturn returnValue){
+    if(isInitializer){
+      return closure->getAt(0, "this");
+    }
+
     return returnValue.value;
   }
 

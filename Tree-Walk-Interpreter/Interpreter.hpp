@@ -168,7 +168,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       
       std::map<std::string, std::shared_ptr<LoxFunction>> methods;
       for(std::shared_ptr<Function> method : stmt->methods){
-        auto function = std::make_shared<LoxFunction>(method, environment);
+        auto function = std::make_shared<LoxFunction>(method, environment, method->name.lexeme == "init");
         methods[method->name.lexeme] = function;
       }
       auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, methods);
@@ -188,7 +188,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       // This is the environment that is active when the function is declared not when it’s called, which is what we want.
       // It represents the lexical scope surrounding the function declaration.
       // Finally, when we call the function, we use that environment as the call’s parent instead of going straight to globals.
-      auto function = std::make_shared<LoxFunction>(stmt, environment);
+      auto function = std::make_shared<LoxFunction>(stmt, environment, false);
       environment->define(stmt->name.lexeme, function);
 
       return {};

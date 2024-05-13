@@ -15,6 +15,7 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     enum class FunctionType{
       NONE,
       FUNCTION,
+      INITIALIZER,
       METHOD
     };
 
@@ -135,6 +136,9 @@ class Resolver : public ExprVisitor, public StmtVisitor{
 
       for(std::shared_ptr<Function> method : stmt->methods){
         FunctionType declaration = FunctionType::METHOD;
+        if(method->name.lexeme == "init"){
+          declaration = FunctionType::INITIALIZER;
+        }
         resolveFunction(method, declaration);
       }
 
@@ -182,6 +186,9 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       }
 
       if(stmt->value != nullptr){
+        if(currentFunction == FunctionType::INITIALIZER){
+          error(stmt->keyword, "Can't return a value from a constructor.");
+        }
         resolve(stmt->value);
       }
 
