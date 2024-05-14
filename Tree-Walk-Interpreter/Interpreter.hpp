@@ -164,6 +164,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
     }
 
     std::any visitClassStmt(std::shared_ptr<Class> stmt) override{
+      std::any superclass;
+      if(stmt->superclass != nullptr){
+        superclass = evaluate(stmt->superclass);
+        if(superclass.type() != typeid(std::shared_ptr<LoxClass>)){
+          throw RuntimeError(stmt->superclass->name, "SuperClass must also be a class.");
+        }
+      }
+
       environment->define(stmt->name.lexeme, nullptr);
       
       std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -171,7 +179,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
         auto function = std::make_shared<LoxFunction>(method, environment, method->name.lexeme == "init");
         methods[method->name.lexeme] = function;
       }
-      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, methods);
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<LoxClass>(superclass), methods);
 
       environment->assign(stmt->name, std::move(klass));
 

@@ -45,6 +45,13 @@ class Parser{
     // Function equivalent to the "classDecl" rule.
     std::shared_ptr<Stmt> classDeclaration(){
       Token name = consume(TokenType::IDENTIFIER, "Expect class name.");
+
+      std::shared_ptr<Variable> superclass = nullptr;
+      if(match(TokenType::LESS)){
+        consume(TokenType::IDENTIFIER, "Expect superclass name.");
+        superclass = std::make_shared<Variable>(previous());
+      }
+
       consume(TokenType::LEFT_BRACE, "Expect '{' before class body.");
 
       std::vector<std::shared_ptr<Function>> methods;
@@ -54,7 +61,7 @@ class Parser{
 
       consume(TokenType::RIGHT_BRACE, "Expect '}' after class body.");
 
-      return std::make_shared<Class>(std::move(name), std::move(methods));
+      return std::make_shared<Class>(std::move(name), superclass, std::move(methods));
     }
 
     // Function equivalent to the "varDecl" rule.

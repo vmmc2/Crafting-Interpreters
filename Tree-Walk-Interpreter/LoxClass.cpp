@@ -2,8 +2,8 @@
 
 #include "LoxClass.hpp"
 
-LoxClass::LoxClass(std::string name, std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-  : name{std::move(name)}, methods{std::move(methods)}
+LoxClass::LoxClass(std::string name, std::shared_ptr<LoxClass> superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods)
+  : name{std::move(name)}, superclass{superclass}, methods{std::move(methods)}
 {}
 
 int LoxClass::arity(){
@@ -30,6 +30,10 @@ std::shared_ptr<LoxFunction> LoxClass::findMethod(const std::string& name){
   auto elem = methods.find(name);
   if(elem != methods.end()){
     return elem->second;
+  }
+
+  if(superclass != nullptr){
+    return superclass->findMethod(name);
   }
 
   return nullptr;
