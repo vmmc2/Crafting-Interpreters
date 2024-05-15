@@ -15,6 +15,7 @@ struct Grouping;
 struct Literal;
 struct Logical;
 struct Set;
+struct Super;
 struct This;
 struct Unary;
 struct Variable;
@@ -28,6 +29,7 @@ struct ExprVisitor{
   virtual std::any visitLiteralExpr(std::shared_ptr<Literal> expr) = 0;
   virtual std::any visitLogicalExpr(std::shared_ptr<Logical> expr) = 0;
   virtual std::any visitSetExpr(std::shared_ptr<Set> expr) = 0;
+  virtual std::any visitSuperExpr(std::shared_ptr<Super> expr) = 0;
   virtual std::any visitThisExpr(std::shared_ptr<This> expr) = 0;
   virtual std::any visitUnaryExpr(std::shared_ptr<Unary> expr) = 0;
   virtual std::any visitVariableExpr(std::shared_ptr<Variable> expr) = 0;
@@ -145,6 +147,19 @@ struct Set : Expr, public std::enable_shared_from_this<Set>{
 
 };
 
+struct Super : Expr, public std::enable_shared_from_this<Super>{
+  const Token keyword;
+  const Token method;
+
+  Super(Token keyword, Token method)
+    : keyword{std::move(keyword)}, method{std::move(method)}
+  {}
+
+  std::any accept(ExprVisitor& visitor) override{
+    return visitor.visitSuperExpr(shared_from_this());
+  }
+};
+
 struct This : Expr, public std::enable_shared_from_this<This>{
   const Token keyword;
 
@@ -153,7 +168,7 @@ struct This : Expr, public std::enable_shared_from_this<This>{
   {}
 
   std::any accept(ExprVisitor& visitor) override{
-    visitor.visitThisExpr(shared_from_this());
+    return visitor.visitThisExpr(shared_from_this());
   }
 };
 

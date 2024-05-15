@@ -446,7 +446,15 @@ class Parser{
       if(match(TokenType::LEFT_PAREN)){
         std::shared_ptr<Expr> expr = expression();
         consume(TokenType::RIGHT_PAREN, "Expected ')' after expression.");
+        
         return std::make_shared<Grouping>(expr);
+      }
+      if(match(TokenType::SUPER)){
+        Token keyword = previous();
+        consume(TokenType::DOT, "Expect a '.' after 'super'.");
+        Token method = consume(TokenType::IDENTIFIER, "Expect a superclass method name.");
+        
+        return std::make_shared<Super>(std::move(keyword), std::move(method));
       }
       if(match(TokenType::THIS)){
         return std::make_shared<This>(previous());
