@@ -21,7 +21,8 @@ class Resolver : public ExprVisitor, public StmtVisitor{
 
     enum class ClassType{
       NONE,
-      CLASS
+      CLASS,
+      SUBCLASS
     };
 
     FunctionType currentFunction = FunctionType::NONE;
@@ -136,7 +137,13 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       }
 
       if(stmt->superclass != nullptr){
+        currentClass = ClassType::SUBCLASS;
         resolve(stmt->superclass);
+      }
+
+      if(stmt->superclass != nullptr){
+        beginScope();
+        scopes.back()["super"] = true;
       }
       
       beginScope();
@@ -151,6 +158,10 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       }
 
       endScope();
+
+      if(stmt->superclass != nullptr){
+        endScope();
+      }
 
       currentClass = enclosingClass;
 
@@ -220,7 +231,6 @@ class Resolver : public ExprVisitor, public StmtVisitor{
       return {};
     }
 
-
     std::any visitAssignExpr(std::shared_ptr<Assign> expr) override{
       resolve(expr->value);
       resolveLocal(expr, expr->name);
@@ -271,6 +281,17 @@ class Resolver : public ExprVisitor, public StmtVisitor{
     std::any visitSetExpr(std::shared_ptr<Set> expr) override{
       resolve(expr->value);
       resolve(expr->object);
+
+      return {};
+    }
+
+    std::any visitSuperExpr(std::shared_ptr<Super> expr) override{
+      if(currentClass == ClassType::NONE){
+        error(expr->keyword, "Can't use 'super' outside of a class.");
+      }else if(currentClass != ClassType::SUBCLASS){
+        error(expr->keyword, "Can't use 'super' inside a class with no superclass.");
+      }
+      resolveLocal(expr, expr->keyword);
 
       return {};
     }

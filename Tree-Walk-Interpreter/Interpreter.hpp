@@ -173,13 +173,27 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       }
 
       environment->define(stmt->name.lexeme, nullptr);
+
+      if(stmt->superclass != nullptr){
+        environment = std::make_shared<Environment>(environment);
+        environment->define("superclass", superclass);
+      }
       
       std::map<std::string, std::shared_ptr<LoxFunction>> methods;
       for(std::shared_ptr<Function> method : stmt->methods){
         auto function = std::make_shared<LoxFunction>(method, environment, method->name.lexeme == "init");
         methods[method->name.lexeme] = function;
       }
-      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<LoxClass>(superclass), methods);
+
+      std::shared_ptr<LoxClass> superklass = nullptr;
+      if(superclass.type() == typeid(std::shared_ptr<LoxClass>)){
+        superklass = std::any_cast<std::shared_ptr<LoxClass>>(superclass);
+      }
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<LoxClass>(superklass), methods);
+
+      if(superklass != nullptr){
+        environment = environment->enclosing;
+      }
 
       environment->assign(stmt->name, std::move(klass));
 
@@ -373,6 +387,19 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       std::any_cast<std::shared_ptr<LoxInstance>>(object)->set(expr->name, value);
 
       return value;
+    }
+
+    std::any visitSuperExpr(std::shared_ptr<Super> expr) override{
+      int distance = locals[expr];
+      auto superclass = std::any_cast<std::shared_ptr<LoxClass>>(environment->getAt(distance, "super"));
+      auto object = std::any_cast<std::shared_ptr<LoxInstance>>(environment->getAt(distance - 1, "this"));
+      std::shared_ptr<LoxFunction> method = superclass->findMethod(expr->method.lexeme);
+
+      if(method == nullptr){
+        throw RuntimeError(expr->method, "Undefined property '" + expr->method.lexeme + "'.");
+      }
+
+      return method->bind(object);
     }
 
     std::any visitThisExpr(std::shared_ptr<This> expr) override{
