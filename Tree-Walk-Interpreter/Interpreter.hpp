@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <map>
 #include <chrono>
 #include <memory>
 #include <string>
@@ -189,7 +190,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       if(superclass.type() == typeid(std::shared_ptr<LoxClass>)){
         superklass = std::any_cast<std::shared_ptr<LoxClass>>(superclass);
       }
-      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<LoxClass>(superklass), methods);
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<std::shared_ptr<LoxClass>>(superklass), methods);
 
       if(superklass != nullptr){
         environment = environment->enclosing;

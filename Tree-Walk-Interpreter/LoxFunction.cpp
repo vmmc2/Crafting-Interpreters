@@ -4,6 +4,7 @@
 #include "Environment.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
+#include "LoxInstance.hpp"
 
 LoxFunction::LoxFunction(std::shared_ptr<Function> declaration, std::shared_ptr<Environment> closure, bool isInitializer)
   : declaration{std::move(declaration)}, closure{std::move(closure)}, isInitializer{isInitializer}

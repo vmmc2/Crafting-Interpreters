@@ -15,6 +15,8 @@
 // allows us to lay out the files similarly to the Java code while
 // avoiding circular dependencies.
 #include "LoxFunction.cpp" // Chapter 10 - Functions
+#include "LoxClass.cpp"    // Chapter 12 - Classes
+#include "LoxInstance.cpp" // Chapter 12 - Classes
 
 Interpreter interpreter{}; 
 

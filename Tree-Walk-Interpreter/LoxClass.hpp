@@ -7,11 +7,9 @@
 #include <vector>
 
 #include "LoxCallable.hpp"
-#include "LoxFunction.hpp"
 
 class Interpreter;
 class LoxFunction;
-class LoxInstance;
 
 class LoxClass : public LoxCallable, public std::enable_shared_from_this<LoxClass>{
   private:
