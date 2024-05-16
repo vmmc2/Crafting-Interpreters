@@ -73,21 +73,22 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       return true;
     }
 
-    bool isEqual(const std::any& left, const std::any& right){
-      if(left.type() == typeid(nullptr) && right.type() == typeid(nullptr)){
+    bool isEqual(const std::any& a, const std::any& b){
+      if(a.type() == typeid(nullptr) && b.type() == typeid(nullptr)){
         return true;
       }
-      if((left.type() == typeid(nullptr) && right.type() != typeid(nullptr)) || (left.type() != typeid(nullptr) && right.type() == typeid(nullptr))){
+      if(a.type() == typeid(nullptr)){
         return false;
       }
-      if(left.type() == typeid(bool) && right.type() == typeid(bool)){
-        return std::any_cast<bool>(left) == std::any_cast<bool>(right);
+
+      if(a.type() == typeid(std::string) && b.type() == typeid(std::string)){
+        return std::any_cast<std::string>(a) == std::any_cast<std::string>(b);
       }
-      if(left.type() == typeid(double) && right.type() == typeid(double)){
-        return std::any_cast<double>(left) == std::any_cast<double>(right);
+      if(a.type() == typeid(double) && b.type() == typeid(double)){
+        return std::any_cast<double>(a) == std::any_cast<double>(b);
       }
-      if(left.type() == typeid(std::string) && right.type() == typeid(std::string)){
-        return std::any_cast<std::string>(left) == std::any_cast<std::string>(right);
+      if(a.type() == typeid(bool) && b.type() == typeid(bool)){
+        return std::any_cast<bool>(a) == std::any_cast<bool>(b);
       }
 
       return false;
@@ -115,6 +116,14 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
       if(object.type() == typeid(std::shared_ptr<LoxFunction>)){
         return std::any_cast<std::shared_ptr<LoxFunction>>(object)->toString();
+      }
+
+      if(object.type() == typeid(std::shared_ptr<LoxClass>)){
+        return std::any_cast<std::shared_ptr<LoxClass>>(object)->toString();
+      }
+
+      if(object.type() == typeid(std::shared_ptr<LoxInstance>)){
+        return std::any_cast<std::shared_ptr<LoxInstance>>(object)->toString();
       }
 
       return "Error in stringify: object type not recognized.";
@@ -337,6 +346,8 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
       if(callee.type() == typeid(std::shared_ptr<LoxFunction>)){
         function = std::any_cast<std::shared_ptr<LoxFunction>>(callee);
+      }else if(callee.type() == typeid(std::shared_ptr<LoxClass>)){
+        function = std::any_cast<std::shared_ptr<LoxClass>>(callee);
       }else{
         throw RuntimeError{expr->paren, "Can only call functions and classes."};
       }

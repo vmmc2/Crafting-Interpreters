@@ -1,7 +1,36 @@
-class DevonshireCream {
-  serveOn() {
-    return "Scones";
+class Doughnut {
+  init(){
+    this.num = 12;
+  }
+
+  cook() {
+    print "Fry until golden brown.";
   }
 }
 
-print DevonshireCream; // Prints "DevonshireCream".
+class BostonCream < Doughnut {
+  init(){
+    this.num = 12;
+  }
+
+  cook() {
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+fun fatorial(n){
+  if(n == 0){
+    return 1;
+  }
+  return n * fatorial(n - 1);
+}
+
+fun main(){
+  var fatResult = fatorial(15);
+  print fatResult;
+
+  var x = Doughnut().cook;
+  x();
+}
+
+main();
