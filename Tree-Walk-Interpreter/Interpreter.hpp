@@ -186,7 +186,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
 
       if(stmt->superclass != nullptr){
         environment = std::make_shared<Environment>(environment);
-        environment->define("superclass", superclass);
+        environment->define("super", superclass);
       }
       
       std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -199,7 +199,7 @@ class Interpreter : public ExprVisitor, public StmtVisitor{
       if(superclass.type() == typeid(std::shared_ptr<LoxClass>)){
         superklass = std::any_cast<std::shared_ptr<LoxClass>>(superclass);
       }
-      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, std::any_cast<std::shared_ptr<LoxClass>>(superklass), methods);
+      auto klass = std::make_shared<LoxClass>(stmt->name.lexeme, superklass, methods);
 
       if(superklass != nullptr){
         environment = environment->enclosing;

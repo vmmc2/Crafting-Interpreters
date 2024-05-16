@@ -14,6 +14,7 @@ class BostonCream < Doughnut {
   }
 
   cook() {
+    super.cook();
     print "Pipe full of custard and coat with chocolate.";
   }
 }
@@ -29,8 +30,7 @@ fun main(){
   var fatResult = fatorial(15);
   print fatResult;
 
-  var x = Doughnut().cook;
-  x();
+  BostonCream().cook();
 }
 
 main();
